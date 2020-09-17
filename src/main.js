@@ -1,54 +1,6 @@
 /** @type {import("../defs/phaser")} */
 /** @type {import("../defs/matter")} */
-/*
-var config = {
-    type: Phaser.AUTO,
-    width: 800,
-    height: 600,
-    physics: {
-        default: 'arcade',
-        arcade: {
-            gravity: { y: 200 }
-        }
-    },
-    scene: {
-        preload: preload,
-        create: create
-    }
-};
 
-// var game = new Phaser.Game(config);
-let game = new Phaser.Game(config)
-
-function preload ()
-{
-    this.load.setBaseURL('http://labs.phaser.io');
-
-    this.load.image('sky', 'assets/skies/space3.png');
-    this.load.image('logo', 'assets/sprites/phaser3-logo.png');
-    this.load.image('red', 'assets/particles/red.png');
-}
-
-function create ()
-{
-    this.add.image(400, 300, 'sky');
-    var particles = this.add.particles('red');
-    // let platform = this.physics.add.static
-    var emitter = particles.createEmitter({
-        speed: 100,
-        scale: { start: 1, end: 0 },
-        blendMode: 'ADD'
-    });
-
-    var logo = this.physics.add.image(400, 100, 'logo');
-
-    logo.setVelocity(100, 200);
-    logo.setBounce(1, 1);
-    logo.setCollideWorldBounds(true);
-
-    emitter.startFollow(logo);
-}
-*/
 var config = {
     type: Phaser.AUTO,
     parent: 'phaser-example',
@@ -72,6 +24,7 @@ var config = {
                     moveKeys: null,
                     playerBullets: null,
                     enemyBullets: null,
+                    enemies:null,
                     time: 0,
                 }
     }
@@ -98,24 +51,13 @@ var Bullet = new Phaser.Class({
     },
 
     // Fires a bullet from the player to the reticle
-    fire: function (shooter, target)
+    fire: function (shooter, direction,speed)
     {
         this.setPosition(shooter.x, shooter.y); // Initial position
-        this.direction = Math.atan( (target.x-this.x) / (target.y-this.y));
-
-        // Calculate X and y velocity of bullet to moves it from shooter to target
-        if (target.y >= this.y)
-        {
-            this.xSpeed = this.speed*Math.sin(this.direction);
-            this.ySpeed = this.speed*Math.cos(this.direction);
-        }
-        else
-        {
-            this.xSpeed = -this.speed*Math.sin(this.direction);
-            this.ySpeed = -this.speed*Math.cos(this.direction);
-        }
-
-        this.rotation = shooter.rotation; // angle bullet with shooters rotation
+        // console.log(this.speed)
+        this.xSpeed = speed*Math.cos(direction);
+        this.ySpeed = speed*Math.sin(direction);
+        this.rotation = direction; // angle bullet with shooters rotation
         this.born = 0; // Time since new bullet spawned
     },
 
@@ -124,8 +66,9 @@ var Bullet = new Phaser.Class({
     {
         this.x += this.xSpeed * delta;
         this.y += this.ySpeed * delta;
+        var speed = Math.sqrt(this.xSpeed*this.xSpeed + this.ySpeed+this.ySpeed)
         this.born += delta;
-        if (this.born > 1800)
+        if (this.born*speed > 1800)
         {
             this.setActive(false);
             this.setVisible(false);
@@ -153,32 +96,38 @@ function create ()
     // Add 2 groups for Bullet objects
     playerBullets = this.physics.add.group({ classType: Bullet, runChildUpdate: true });
     enemyBullets = this.physics.add.group({ classType: Bullet, runChildUpdate: true });
+    enemies = this.physics.add.group();
+    this.physics.add.collider(enemies,playerBullets,enemyHitCallback)
 
-    // Add background player, enemy, reticle, healthpoint sprites
+    // Add background player, enemy,
     var background = this.add.image(800, 600, 'background');
-    player = this.physics.add.sprite(800, 600, 'player_handgun');
-    enemy = this.physics.add.sprite(300, 600, 'player_handgun');
-    reticle = this.physics.add.sprite(800, 700, 'target');
-    hp1 = this.add.image(-350, -250, 'target').setScrollFactor(0.5, 0.5);
-    hp2 = this.add.image(-300, -250, 'target').setScrollFactor(0.5, 0.5);
-    hp3 = this.add.image(-250, -250, 'target').setScrollFactor(0.5, 0.5);
+    player = this.physics.add.sprite(800, 1000, 'player_handgun');
+    player.rotation = Math.PI * -0.5;
+    this.physics.add.collider(player,enemyBullets,playerHitCallback)
+    
+    for (var i = 0; i < 9; i++)
+        for(var j = 0; j < 4; j++)
+        {
+            enemy = this.physics.add.sprite(200+150*i, 100+150*j, 'player_handgun');
+            enemy.angle = 90;
+            enemy.health = 1;
+            enemy.lastFired = 0;
+            enemy.setOrigin(0.5, 0.5).setDisplaySize(132, 120).setCollideWorldBounds(true);
+            enemies.add(enemy);
+        }
+
 
     // Set image/sprite properties
     background.setOrigin(0.5, 0.5).setDisplaySize(1600, 1200);
     player.setOrigin(0.5, 0.5).setDisplaySize(132, 120).setCollideWorldBounds(true).setDrag(500, 500);
-    enemy.setOrigin(0.5, 0.5).setDisplaySize(132, 120).setCollideWorldBounds(true);
-    reticle.setOrigin(0.5, 0.5).setDisplaySize(25, 25).setCollideWorldBounds(true);
-    hp1.setOrigin(0.5, 0.5).setDisplaySize(50, 50);
-    hp2.setOrigin(0.5, 0.5).setDisplaySize(50, 50);
-    hp3.setOrigin(0.5, 0.5).setDisplaySize(50, 50);
+
 
     // Set sprite variables
     player.health = 3;
-    enemy.health = 3;
-    enemy.lastFired = 0;
+
 
     // Set camera properties
-    this.cameras.main.zoom = 0.5;
+    this.cameras.main.zoom = 0.3;
     this.cameras.main.startFollow(player);
 
     // Creates object for input with WASD kets
@@ -222,20 +171,6 @@ function create ()
             player.setAccelerationX(0);
     });
 
-    // Fires bullet from player on left click of mouse
-    this.input.on('pointerdown', function (pointer, time, lastFired) {
-        if (player.active === false)
-            return;
-
-        // Get bullet from bullets group
-        var bullet = playerBullets.get().setActive(true).setVisible(true);
-
-        if (bullet)
-        {
-            bullet.fire(player, reticle);
-            this.physics.add.collider(enemy, bullet, enemyHitCallback);
-        }
-    }, this);
 
     //Fire bullets from player on SPACE button pressed
     this.input.keyboard.on('keydown_SPACE', function(event)
@@ -245,34 +180,16 @@ function create ()
 
         // Get bullet from bullets group
         var bullet = playerBullets.get().setActive(true).setVisible(true);
-
+        
         if (bullet)
         {
-            bullet.fire(player, reticle);
-            this.physics.add.collider(enemy, bullet, enemyHitCallback);
+            bullet.fire(player,player.rotation,1);
+            //this.physics.add.collider(enemy, bullet, enemyHitCallback);
         }
-    });
+        
+    },this);
 
 
-    // Pointer lock will only work after mousedown
-    game.canvas.addEventListener('mousedown', function () {
-        game.input.mouse.requestPointerLock();
-    });
-
-    // Exit pointer lock when Q or escape (by default) is pressed.
-    this.input.keyboard.on('keydown_Q', function (event) {
-        if (game.input.mouse.locked)
-            game.input.mouse.releasePointerLock();
-    }, 0, this);
-
-    // Move reticle upon locked pointer move
-    this.input.on('pointermove', function (pointer) {
-        if (this.input.mouse.locked)
-        {
-            reticle.x += pointer.movementX;
-            reticle.y += pointer.movementY;
-        }
-    }, this);
 
 }
 
@@ -298,6 +215,8 @@ function enemyHitCallback(enemyHit, bulletHit)
 function playerHitCallback(playerHit, bulletHit)
 {
     // Reduce health of player
+    player.alpha = 0;
+    /*
     if (bulletHit.active === true && playerHit.active === true)
     {
         playerHit.health = playerHit.health - 1;
@@ -321,9 +240,29 @@ function playerHitCallback(playerHit, bulletHit)
         // Destroy bullet
         bulletHit.setActive(false).setVisible(false);
     }
+    */
 }
 
-function enemyFire(enemy, player, time, gameObject)
+function enemiesFire(enemies, time, gameObject)
+{
+    var enemiesArray = enemies.getChildren();
+    /*
+    for (var enemy in enemiesArray)
+    {
+        enemyFire(enemy,time,gameObject);
+    }
+    */
+
+    //console.log(Math.random());
+    for (var i = 0; i < enemiesArray.length; i++) 
+    {
+        
+            enemyFire(enemiesArray[i],time,gameObject);
+    }
+    
+}
+
+function enemyFire(enemy, time, gameObject)
 {
     if (enemy.active === false)
     {
@@ -333,15 +272,15 @@ function enemyFire(enemy, player, time, gameObject)
     if ((time - enemy.lastFired) > 1000)
     {
         enemy.lastFired = time;
-
-        // Get bullet from bullets group
-        var bullet = enemyBullets.get().setActive(true).setVisible(true);
-
-        if (bullet)
+        if (Math.random()<0.05)
         {
-            bullet.fire(enemy, player);
-            // Add collider between bullet and player
-            gameObject.physics.add.collider(player, bullet, playerHitCallback);
+            // Get bullet from bullets group
+            var bullet = enemyBullets.get().setActive(true).setVisible(true);
+
+            if (bullet)
+            {
+                bullet.fire(enemy,enemy.rotation,0.5);
+            }
         }
     }
 }
@@ -356,7 +295,7 @@ function constrainVelocity(sprite, maxVelocity)
     vx = sprite.body.velocity.x;
     vy = sprite.body.velocity.y;
     currVelocitySqr = vx * vx + vy * vy;
-
+    player.rotation = Math.PI * -0.5;
     if (currVelocitySqr > maxVelocity * maxVelocity)
     {
         angle = Math.atan2(vy, vx);
@@ -367,42 +306,11 @@ function constrainVelocity(sprite, maxVelocity)
     }
 }
 
-// Ensures reticle does not move offscreen
-function constrainReticle(reticle)
-{
-    var distX = reticle.x-player.x; // X distance between player & reticle
-    var distY = reticle.y-player.y; // Y distance between player & reticle
-
-    // Ensures reticle cannot be moved offscreen (player follow)
-    if (distX > 800)
-        reticle.x = player.x+800;
-    else if (distX < -800)
-        reticle.x = player.x-800;
-
-    if (distY > 600)
-        reticle.y = player.y+600;
-    else if (distY < -600)
-        reticle.y = player.y-600;
-}
-
 function update (time, delta)
 {
-    // Rotates player to face towards reticle
-    player.rotation = Phaser.Math.Angle.Between(player.x, player.y, reticle.x, reticle.y);
-
-    // Rotates enemy to face towards player
-    enemy.rotation = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
-
-    //Make reticle move with player
-    reticle.body.velocity.x = player.body.velocity.x;
-    reticle.body.velocity.y = player.body.velocity.y;
-
     // Constrain velocity of player
     constrainVelocity(player, 500);
-
-    // Constrain position of constrainReticle
-    constrainReticle(reticle);
-
     // Make enemy fire
-    enemyFire(enemy, player, time, this);
+    //enemyFire(enemy,time,this);
+    enemiesFire(enemies, time, this);
 }
