@@ -1,6 +1,8 @@
 /** @type {import("../defs/phaser")} */
 /** @type {import("../defs/matter")} */
 
+
+
 /*
 var sceneConfig = {
   preload: preload,
@@ -31,6 +33,11 @@ class GameScene extends Phaser.Scene{
 }
 
 var scene;
+var IsBeat = false;
+var InputTolerance = 125;
+var MSPerBeat = 375;
+var HasFireThisBeat = false;
+var NowTime;
 var Bullet = new Phaser.Class({
 
   Extends: Phaser.GameObjects.Image,
@@ -46,11 +53,12 @@ var Bullet = new Phaser.Class({
       this.direction = 0;
       this.xSpeed = 0;
       this.ySpeed = 0;
-      this.setSize(12, 12, true);
+      this.setSize(10, 10, true);
+      this.setDisplaySize(100,100);
   },
 
   // Fires a bullet from the player to the reticle
-  fire: function (shooter, direction,speed)
+  fire: function (shooter, direction,speed,IsPlayer = false)
   {
       this.setPosition(shooter.x, shooter.y); // Initial position
       // console.log(this.speed)
@@ -58,6 +66,12 @@ var Bullet = new Phaser.Class({
       this.ySpeed = speed*Math.sin(direction);
       this.rotation = direction; // angle bullet with shooters rotation
       this.born = 0; // Time since new bullet spawned
+      if (IsPlayer)
+      {
+        this.setTexture('bullet_player_1');
+        this.setAngle(0);
+        //this.setSize(64, 64, true);
+      }
   },
 
   // Updates the position of the bullet each cycle
@@ -67,7 +81,7 @@ var Bullet = new Phaser.Class({
       this.y += this.ySpeed * delta;
       var speed = Math.sqrt(this.xSpeed*this.xSpeed + this.ySpeed+this.ySpeed)
       this.born += delta;
-      if (this.born*speed > 1800)
+      if (this.born*speed > 2500)
       {
           this.setActive(false);
           this.setVisible(false);
@@ -80,7 +94,7 @@ function PlayerWin()
 {
   //TODO: WIN EFFECT
   game.sound.setRate(2)
-  game.time.delayedCall(1000,RestartGame);
+  scene.time.delayedCall(1000,RestartGame);
 }
 
 function PlayerLose(player)
@@ -97,6 +111,7 @@ function RestartGame()
 {
   game.sound.setRate(1);
   game.sound.stopAll();
+  //game.scene.stop("GameScene");
   game.scene.start("GameScene");
   
 }
@@ -105,7 +120,14 @@ var isLose=false;
 function CheckGameOver(player,enemies)
 {
   if (player.health==0) PlayerLose(player);
-  if (enemies.getChildren().length == 0) PlayerWin(); 
+
+  var enemiesArray = enemies.getChildren();
+  var AliveEnemy = 0;
+  for (var i = 0; i < enemiesArray.length; i++) 
+  {
+     if (enemiesArray[i].active) AliveEnemy++;
+  }
+  if (AliveEnemy == 0) PlayerWin();
 }
 
 function preload ()
@@ -115,7 +137,9 @@ function preload ()
   this.load.spritesheet('player_handgun', 'assets/player_handgun.png',
       { frameWidth: 66, frameHeight: 60 }
   ); // Made by tokkatrain: https://tokkatrain.itch.io/top-down-basic-set
-  this.load.image('bullet', 'assets/bullet6.png');
+  this.load.image('bullet_player_1','assets/Sprites/Projectile1.png');
+
+  this.load.image('bullet', 'assets/Sprites/Projectile4.png');
   this.load.image('target', 'assets/ball.png');
   this.load.image('background', 'assets/underwater1.png');
   //this.load.audio('title_bgm','assets/Audio/bgm.wav');
@@ -137,6 +161,7 @@ function create ()
   })
   scene = game.scene.getScene("GameScene");
   isLose = false;
+  NowTime=0;
 
   // Add background player, enemy,
   var background = this.add.image(800, 600, 'background');
@@ -160,6 +185,9 @@ function create ()
   background.setOrigin(0.5, 0.5).setDisplaySize(1600, 1200);
   player.setOrigin(0.5, 0.5).setDisplaySize(132, 120).setCollideWorldBounds(true).setDrag(500, 500);
 
+  
+  //scene.time.addEvent({ delay: 6.25, callback: function(event), loop: true });
+  //scene.time.delayedCall(MSPerBeat-InputTolerance,)
 
   // Set sprite variables
   player.health = 3;
@@ -220,19 +248,41 @@ function create ()
   {
       if (player.active === false || isLose)
       return;
-
+      if (!IsBeat)
+      {
+        this.cameras.main.shake(500);
+        return;
+      }
+      if (HasFireThisBeat) return;
+      
       // Get bullet from bullets group
       var bullet = playerBullets.get().setActive(true).setVisible(true);
       
       if (bullet)
       {
-          bullet.fire(player,player.rotation,1);
+          HasFireThisBeat = true;
+          bullet.fire(player,player.rotation,1,true);
           //this.physics.add.collider(enemy, bullet, enemyHitCallback);
       }
       
   },this);
 
+  
+
 }
+/*
+function StartEvent
+
+function InputBeatBegin()
+{
+  IsBeat = true;
+}
+
+function InputBeatEnd()
+{
+  IsBeat = false;
+}*/
+
 
 function enemyHitCallback(enemyHit, bulletHit)
 {
@@ -287,6 +337,7 @@ function playerHitCallback(playerHit, bulletHit)
 
 function enemiesFire(enemies, time, gameObject)
 {
+  if (!enemies) return;
   var enemiesArray = enemies.getChildren();
   /*
   for (var enemy in enemiesArray)
@@ -355,6 +406,18 @@ function constrainVelocity(sprite, maxVelocity)
 
 function update (time, delta)
 {
+  //console.log(time);
+  NowTime += delta;
+  if (NowTime%MSPerBeat > MSPerBeat-InputTolerance || NowTime%MSPerBeat < InputTolerance)
+  {
+    IsBeat=true;
+  }
+  else
+  {
+    HasFireThisBeat=false;
+    IsBeat=false;
+  }
+
   // Constrain velocity of player
   constrainVelocity(player, 500);
 
