@@ -1,6 +1,7 @@
 /** @type {import("../defs/phaser")} */
 /** @type {import("../defs/matter")} */
 
+/*
 var sceneConfig = {
   preload: preload,
   create: create,
@@ -16,7 +17,7 @@ var sceneConfig = {
               enemies:null,
               time: 0,
           }
-};
+};*/
 
 class GameScene extends Phaser.Scene{
   constructor()
@@ -27,10 +28,9 @@ class GameScene extends Phaser.Scene{
   preload =preload;
   create = create;
   update= update;   
-
 }
 
-
+var scene;
 var Bullet = new Phaser.Class({
 
   Extends: Phaser.GameObjects.Image,
@@ -76,6 +76,38 @@ var Bullet = new Phaser.Class({
 
 });
 
+function PlayerWin()
+{
+  //TODO: WIN EFFECT
+  game.sound.setRate(2)
+  game.time.delayedCall(1000,RestartGame);
+}
+
+function PlayerLose(player)
+{
+
+  player.body.velocity.x = 0;
+  player.body.velocity.y = 0;
+  player.alpha = 0;
+  game.sound.setRate(0.5);
+  scene.time.delayedCall(1000,RestartGame);
+  isLose = true;
+}
+function RestartGame()
+{
+  game.sound.setRate(1);
+  game.sound.stopAll();
+  game.scene.start("GameScene");
+  
+}
+
+var isLose=false;
+function CheckGameOver(player,enemies)
+{
+  if (player.health==0) PlayerLose(player);
+  if (enemies.getChildren().length == 0) PlayerWin(); 
+}
+
 function preload ()
 {
   // Load in images and sprites
@@ -86,18 +118,25 @@ function preload ()
   this.load.image('bullet', 'assets/bullet6.png');
   this.load.image('target', 'assets/ball.png');
   this.load.image('background', 'assets/underwater1.png');
+  //this.load.audio('title_bgm','assets/Audio/bgm.wav');
 }
 
 function create ()
 {
   // Set world bounds
   this.physics.world.setBounds(0, 0, 1600, 1200);
-
   // Add 2 groups for Bullet objects
   playerBullets = this.physics.add.group({ classType: Bullet, runChildUpdate: true });
   enemyBullets = this.physics.add.group({ classType: Bullet, runChildUpdate: true });
   enemies = this.physics.add.group();
   this.physics.add.collider(enemies,playerBullets,enemyHitCallback)
+
+    //Play Music
+    this.sound.play("title_bgm",{
+      loop: true
+  })
+  scene = game.scene.getScene("GameScene");
+  isLose = false;
 
   // Add background player, enemy,
   var background = this.add.image(800, 600, 'background');
@@ -139,21 +178,25 @@ function create ()
       'space': Phaser.Input.Keyboard.KeyCodes.SPACE
   });
 
-  // Enables movement of player with WASD keys
+  // Enables movement of player with Arrow keys
   this.input.keyboard.on('keydown_UP', function (event) {
+      if (!isLose)
       player.setAccelerationY(-800);
   });
   this.input.keyboard.on('keydown_DOWN', function (event) {
+    if (!isLose)
       player.setAccelerationY(800);
   });
   this.input.keyboard.on('keydown_LEFT', function (event) {
+    if (!isLose)
       player.setAccelerationX(-800);
   });
   this.input.keyboard.on('keydown_RIGHT', function (event) {
+    if (!isLose)
       player.setAccelerationX(800);
   });
 
-  // Stops player acceleration on uppress of WASD keys
+  // Stops player acceleration on uppress of Arrow keys
   this.input.keyboard.on('keyup_UP', function (event) {
       if (moveKeys['down'].isUp)
           player.setAccelerationY(0);
@@ -175,7 +218,7 @@ function create ()
   //Fire bullets from player on SPACE button pressed
   this.input.keyboard.on('keydown_SPACE', function(event)
   {
-      if (player.active === false)
+      if (player.active === false || isLose)
       return;
 
       // Get bullet from bullets group
@@ -188,8 +231,6 @@ function create ()
       }
       
   },this);
-
-
 
 }
 
@@ -214,8 +255,9 @@ function enemyHitCallback(enemyHit, bulletHit)
 
 function playerHitCallback(playerHit, bulletHit)
 {
+  playerHit.health--;
   // Reduce health of player
-  player.alpha = 0;
+  //player.alpha = 0;
   /*
   if (bulletHit.active === true && playerHit.active === true)
   {
@@ -290,7 +332,12 @@ function constrainVelocity(sprite, maxVelocity)
 {
   if (!sprite || !sprite.body)
     return;
-
+  if (isLose)
+  {
+    sprite.body.velocity.x = 0;
+    sprite.body.velocity.y = 0;
+    return;
+  }
   var angle, currVelocitySqr, vx, vy;
   vx = sprite.body.velocity.x;
   vy = sprite.body.velocity.y;
@@ -310,7 +357,10 @@ function update (time, delta)
 {
   // Constrain velocity of player
   constrainVelocity(player, 500);
-  // Make enemy fire
-  //enemyFire(enemy,time,this);
+
+  //TODO: Change Enemies Behaviour, to adpat Music
   enemiesFire(enemies, time, this);
+
+  CheckGameOver(player,enemies);
+
 }

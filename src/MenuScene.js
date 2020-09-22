@@ -18,6 +18,7 @@ class MenuScene extends Phaser.Scene{
         })
         PlayButton.setInteractive();
         PlayButton.on("pointerup", ()=>{
+            this.sound.stopAll();
             this.scene.start("GameScene");
         })
        
