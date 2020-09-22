@@ -62,8 +62,9 @@ var Bullet = new Phaser.Class({
   {
       this.setPosition(shooter.x, shooter.y); // Initial position
       // console.log(this.speed)
-      this.xSpeed = speed*Math.cos(direction);
-      this.ySpeed = speed*Math.sin(direction);
+      this.xSpeed = speed*Math.sin(direction);
+      this.ySpeed = -speed*Math.cos(direction);
+      if (!IsPlayer) this.ySpeed *= -1;
       this.rotation = direction; // angle bullet with shooters rotation
       this.born = 0; // Time since new bullet spawned
       if (IsPlayer)
@@ -137,9 +138,16 @@ function preload ()
   this.load.spritesheet('player_handgun', 'assets/player_handgun.png',
       { frameWidth: 66, frameHeight: 60 }
   ); // Made by tokkatrain: https://tokkatrain.itch.io/top-down-basic-set
-  this.load.image('bullet_player_1','assets/Sprites/Projectile1.png');
+  this.load.image('Player','assets/Sprites/Character_back1.png');
 
-  this.load.image('bullet', 'assets/Sprites/Projectile4.png');
+  this.load.image('Enemy1','assets/Sprites/enemy_a1.png');
+  this.load.image('Enemy2','assets/Sprites/enemy_b2.png');
+  this.load.image('Enemy3','assets/Sprites/enemy_c1.png');
+
+
+  this.load.image('bullet_player_1','assets/Sprites/projectile1.png');
+
+  this.load.image('bullet', 'assets/Sprites/projectile4.png');
   this.load.image('target', 'assets/ball.png');
   this.load.image('background', 'assets/underwater1.png');
   //this.load.audio('title_bgm','assets/Audio/bgm.wav');
@@ -150,6 +158,7 @@ function create ()
   // Set world bounds
   this.physics.world.setBounds(0, 0, 1600, 1200);
   // Add 2 groups for Bullet objects
+  
   playerBullets = this.physics.add.group({ classType: Bullet, runChildUpdate: true });
   enemyBullets = this.physics.add.group({ classType: Bullet, runChildUpdate: true });
   enemies = this.physics.add.group();
@@ -165,18 +174,34 @@ function create ()
 
   // Add background player, enemy,
   var background = this.add.image(800, 600, 'background');
-  player = this.physics.add.sprite(800, 1000, 'player_handgun');
-  player.rotation = Math.PI * -0.5;
+  //player = this.physics.add.sprite(800, 1000, 'player_handgun');
+  player = this.physics.add.image(800,1000,'Player');
+  
+
+  player.rotation = 0;
   this.physics.add.collider(player,enemyBullets,playerHitCallback)
   
   for (var i = 0; i < 9; i++)
       for(var j = 0; j < 4; j++)
       {
-          enemy = this.physics.add.sprite(200+150*i, 100+150*j, 'player_handgun');
-          enemy.angle = 90;
+          enemy = this.physics.add.image(200+150*i, 100+150*j, 'player_handgun');
+          enemy.angle = 0;
           enemy.health = 1;
           enemy.lastFired = 0;
           enemy.setOrigin(0.5, 0.5).setDisplaySize(132, 120).setCollideWorldBounds(true);
+          let t = Math.random();
+          if (t<0.35)
+          {
+            enemy.setTexture('Enemy1');
+          }
+          else if (t<0.7)
+          {
+            enemy.setTexture('Enemy2');
+          }
+          else
+          {
+            enemy.setTexture('Enemy3');
+          }
           enemies.add(enemy);
       }
 
@@ -393,7 +418,7 @@ function constrainVelocity(sprite, maxVelocity)
   vx = sprite.body.velocity.x;
   vy = sprite.body.velocity.y;
   currVelocitySqr = vx * vx + vy * vy;
-  player.rotation = Math.PI * -0.5;
+  //player.rotation = Math.PI * -0.5;
   if (currVelocitySqr > maxVelocity * maxVelocity)
   {
       angle = Math.atan2(vy, vx);
