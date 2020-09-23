@@ -117,6 +117,23 @@ function RestartGame()
   
 }
 
+isMoveByForce = true;
+function SwitchInputMode()
+{
+  if (isMoveByForce)
+  {
+    console.log("Move mode: Move By Velocity");
+    isMoveByForce = false;
+    player.setDrag(0);
+  }
+  else
+  {
+    console.log("Move mode: Move By Force");
+    isMoveByForce = true;
+    player.setDrag(800);
+  }
+}
+
 var isLose=false;
 function CheckGameOver(player,enemies)
 {
@@ -150,13 +167,12 @@ function preload ()
   this.load.image('bullet', 'assets/Sprites/projectile4.png');
   this.load.image('target', 'assets/ball.png');
   this.load.image('background', 'assets/underwater1.png');
-  //this.load.audio('title_bgm','assets/Audio/bgm.wav');
 }
 
 function create ()
 {
   // Set world bounds
-  this.physics.world.setBounds(0, 0, 1600, 1200);
+  this.physics.world.setBounds(100, 1000, 1400, 1200);
   // Add 2 groups for Bullet objects
   
   playerBullets = this.physics.add.group({ classType: Bullet, runChildUpdate: true });
@@ -170,8 +186,8 @@ function create ()
   })
   scene = game.scene.getScene("GameScene");
   isLose = false;
-  NowTime=0;
-
+  NowTime = 0;
+  isMoveByForce = true;
   // Add background player, enemy,
   var background = this.add.image(800, 600, 'background');
   //player = this.physics.add.sprite(800, 1000, 'player_handgun');
@@ -208,7 +224,7 @@ function create ()
 
   // Set image/sprite properties
   background.setOrigin(0.5, 0.5).setDisplaySize(1600, 1200);
-  player.setOrigin(0.5, 0.5).setDisplaySize(132, 120).setCollideWorldBounds(true).setDrag(500, 500);
+  player.setOrigin(0.5, 0.5).setDisplaySize(132, 120).setCollideWorldBounds(true).setDrag(800);
 
   
   //scene.time.addEvent({ delay: 6.25, callback: function(event), loop: true });
@@ -219,8 +235,8 @@ function create ()
 
 
   // Set camera properties
-  this.cameras.main.zoom = 0.3;
-  this.cameras.main.startFollow(player);
+  this.cameras.main.zoom = 0.5;
+  this.cameras.main.setScroll(400,300);
 
   // Creates object for input with WASD kets
   moveKeys = this.input.keyboard.addKeys({
@@ -228,43 +244,44 @@ function create ()
       'down': Phaser.Input.Keyboard.KeyCodes.DOWN,
       'left': Phaser.Input.Keyboard.KeyCodes.LEFT,
       'right': Phaser.Input.Keyboard.KeyCodes.RIGHT,
-      'space': Phaser.Input.Keyboard.KeyCodes.SPACE
+      'space': Phaser.Input.Keyboard.KeyCodes.SPACE,
+      'F': Phaser.Input.Keyboard.KeyCodes.F
+  });
+  this.input.keyboard.on('keydown_F', function (event) 
+  {
+    SwitchInputMode();
   });
 
-  // Enables movement of player with Arrow keys
-  this.input.keyboard.on('keydown_UP', function (event) {
-      if (!isLose)
-      player.setAccelerationY(-800);
-  });
-  this.input.keyboard.on('keydown_DOWN', function (event) {
+
+  this.input.keyboard.on('keydown_LEFT', function (event) 
+  {
     if (!isLose)
-      player.setAccelerationY(800);
-  });
-  this.input.keyboard.on('keydown_LEFT', function (event) {
-    if (!isLose)
-      player.setAccelerationX(-800);
+    {
+      if (isMoveByForce) player.setAccelerationX(-1200);
+      else player.setVelocityX(-400);
+    }
   });
   this.input.keyboard.on('keydown_RIGHT', function (event) {
     if (!isLose)
-      player.setAccelerationX(800);
+    {
+      if (isMoveByForce) player.setAccelerationX(1200);
+      else player.setVelocityX(400);
+    }
   });
 
-  // Stops player acceleration on uppress of Arrow keys
-  this.input.keyboard.on('keyup_UP', function (event) {
-      if (moveKeys['down'].isUp)
-          player.setAccelerationY(0);
-  });
-  this.input.keyboard.on('keyup_DOWN', function (event) {
-      if (moveKeys['up'].isUp)
-          player.setAccelerationY(0);
-  });
   this.input.keyboard.on('keyup_LEFT', function (event) {
       if (moveKeys['right'].isUp)
-          player.setAccelerationX(0);
+      {
+        if (isMoveByForce) player.setAccelerationX(0);
+        else player.setVelocityX(0);
+      }
   });
   this.input.keyboard.on('keyup_RIGHT', function (event) {
       if (moveKeys['left'].isUp)
-          player.setAccelerationX(0);
+      {
+        if (isMoveByForce) player.setAccelerationX(0);
+        else player.setVelocityX(0);
+      }
   });
 
 
@@ -295,18 +312,6 @@ function create ()
   
 
 }
-/*
-function StartEvent
-
-function InputBeatBegin()
-{
-  IsBeat = true;
-}
-
-function InputBeatEnd()
-{
-  IsBeat = false;
-}*/
 
 
 function enemyHitCallback(enemyHit, bulletHit)
@@ -444,7 +449,7 @@ function update (time, delta)
   }
 
   // Constrain velocity of player
-  constrainVelocity(player, 500);
+  constrainVelocity(player, 350);
 
   //TODO: Change Enemies Behaviour, to adpat Music
   enemiesFire(enemies, time, this);
