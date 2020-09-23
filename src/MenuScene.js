@@ -15,7 +15,8 @@ class MenuScene extends Phaser.Scene{
         this.sound.pauseOnBlur = false;
         this.sound.play("title_bgm",{
             loop: true
-        })
+        });
+        game.sound.setVolume(0.5);
         PlayButton.setInteractive();
         PlayButton.on("pointerup", ()=>{
             this.sound.stopAll();

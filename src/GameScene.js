@@ -47,14 +47,14 @@ var Bullet = new Phaser.Class({
   // Bullet Constructor
   function Bullet (scene)
   {
-      Phaser.GameObjects.Image.call(this, scene, 0, 0, 'bullet');
+      Phaser.GameObjects.Image.call(this, scene, 0, 0, 'projectile1');
       this.speed = 1;
       this.born = 0;
       this.direction = 0;
       this.xSpeed = 0;
       this.ySpeed = 0;
       this.setSize(10, 10, true);
-      this.setDisplaySize(100,100);
+      this.setDisplaySize(75,75);
   },
 
   // Fires a bullet from the player to the reticle
@@ -64,14 +64,20 @@ var Bullet = new Phaser.Class({
       // console.log(this.speed)
       this.xSpeed = speed*Math.sin(direction);
       this.ySpeed = -speed*Math.cos(direction);
-      if (!IsPlayer) this.ySpeed *= -1;
       this.rotation = direction; // angle bullet with shooters rotation
       this.born = 0; // Time since new bullet spawned
       if (IsPlayer)
       {
-        this.setTexture('bullet_player_1');
+        if (Math.random() > 0.5) this.setTexture('projectile1');
+        else this.setTexture('projectile2');
         this.setAngle(0);
         //this.setSize(64, 64, true);
+      }
+      else
+      {
+        if (Math.random() > 0.5) this.setTexture('projectile3');
+        else this.setTexture('projectile4');
+        this.ySpeed *= -1;
       }
   },
 
@@ -96,6 +102,7 @@ function PlayerWin()
   //TODO: WIN EFFECT
   game.sound.setRate(2)
   scene.time.delayedCall(1000,RestartGame);
+  isWin = true;
 }
 
 function PlayerLose(player)
@@ -134,7 +141,7 @@ function SwitchInputMode()
   }
 }
 
-var isLose=false;
+var isLose = false, isWin = false;
 function CheckGameOver(player,enemies)
 {
   if (player.health==0) PlayerLose(player);
@@ -156,15 +163,25 @@ function preload ()
       { frameWidth: 66, frameHeight: 60 }
   ); // Made by tokkatrain: https://tokkatrain.itch.io/top-down-basic-set
   this.load.image('Player','assets/Sprites/Character_back1.png');
+  this.load.image('Player2','assets/Sprites/Character_back2.png');
 
-  this.load.image('Enemy1','assets/Sprites/enemy_a1.png');
-  this.load.image('Enemy2','assets/Sprites/enemy_b2.png');
-  this.load.image('Enemy3','assets/Sprites/enemy_c1.png');
+  this.load.image('Enemy1_1','assets/Sprites/enemy_a1.png');
+  this.load.image('Enemy2_1','assets/Sprites/enemy_b1.png');
+  this.load.image('Enemy3_1','assets/Sprites/enemy_c1.png');
+
+  this.load.image('Enemy1_2','assets/Sprites/enemy_a2.png');
+  this.load.image('Enemy2_2','assets/Sprites/enemy_b2.png');
+  this.load.image('Enemy3_2','assets/Sprites/enemy_c2.png');
+
+  this.load.image('UI_Win','assets/Sprites/UI_Win.png');
+  this.load.image('UI_Lose','assets/Sprites/UI_Lose.png');
 
 
-  this.load.image('bullet_player_1','assets/Sprites/projectile1.png');
+  this.load.image('projectile1','assets/Sprites/projectile1.png');
+  this.load.image('projectile2','assets/Sprites/projectile2.png');
+  this.load.image('projectile3','assets/Sprites/projectile3.png');
+  this.load.image('projectile4','assets/Sprites/projectile4.png');
 
-  this.load.image('bullet', 'assets/Sprites/projectile4.png');
   this.load.image('target', 'assets/ball.png');
   this.load.image('background', 'assets/underwater1.png');
 }
@@ -174,7 +191,7 @@ function create ()
   // Set world bounds
   this.physics.world.setBounds(100, 1000, 1400, 1200);
   // Add 2 groups for Bullet objects
-  
+
   playerBullets = this.physics.add.group({ classType: Bullet, runChildUpdate: true });
   enemyBullets = this.physics.add.group({ classType: Bullet, runChildUpdate: true });
   enemies = this.physics.add.group();
@@ -184,16 +201,20 @@ function create ()
     this.sound.play("title_bgm",{
       loop: true
   })
+  game.sound.setVolume(0.5);
   scene = game.scene.getScene("GameScene");
   isLose = false;
+  isWin = false;
   NowTime = 0;
   isMoveByForce = true;
-  // Add background player, enemy,
-  var background = this.add.image(800, 600, 'background');
+
+  // Add background, player, enemy, UI Elements
+  background = this.add.image(800, 600, 'background');
+  UI_Win = this.add.image(800,600,'UI_Win');
+  UI_Lose = this.add.image(800,600,'UI_Lose');
+
   //player = this.physics.add.sprite(800, 1000, 'player_handgun');
   player = this.physics.add.image(800,1000,'Player');
-  
-
   player.rotation = 0;
   this.physics.add.collider(player,enemyBullets,playerHitCallback)
   
@@ -208,15 +229,18 @@ function create ()
           let t = Math.random();
           if (t<0.35)
           {
-            enemy.setTexture('Enemy1');
+            enemy.setTexture('Enemy1_1');
+            enemy.TextureArray = ['Enemy1_1','Enemy1_2'];
           }
           else if (t<0.7)
           {
-            enemy.setTexture('Enemy2');
+            enemy.setTexture('Enemy2_1');
+            enemy.TextureArray = ['Enemy2_1','Enemy2_2'];
           }
           else
           {
-            enemy.setTexture('Enemy3');
+            enemy.setTexture('Enemy3_2');
+            enemy.TextureArray = ['Enemy3_1','Enemy3_2'];
           }
           enemies.add(enemy);
       }
@@ -225,7 +249,10 @@ function create ()
   // Set image/sprite properties
   background.setOrigin(0.5, 0.5).setDisplaySize(1600, 1200);
   player.setOrigin(0.5, 0.5).setDisplaySize(132, 120).setCollideWorldBounds(true).setDrag(800);
-
+  UI_Win.setOrigin(0.5,0.5);
+  UI_Win.alpha = 0;
+  UI_Lose.setOrigin(0.5,0.5);
+  UI_Lose.alpha = 0;
   
   //scene.time.addEvent({ delay: 6.25, callback: function(event), loop: true });
   //scene.time.delayedCall(MSPerBeat-InputTolerance,)
@@ -365,6 +392,16 @@ function playerHitCallback(playerHit, bulletHit)
   */
 }
 
+function enemiesAnim(index)
+{
+  if (!enemies) return;
+  var enemiesArray = enemies.getChildren();
+  for (var i = 0; i < enemiesArray.length; i++) 
+  {
+    enemiesArray[i].setTexture(enemiesArray[i].TextureArray[index]);
+  }
+}
+
 function enemiesFire(enemies, time, gameObject)
 {
   if (!enemies) return;
@@ -436,7 +473,7 @@ function constrainVelocity(sprite, maxVelocity)
 
 function update (time, delta)
 {
-  //console.log(time);
+  // Set Beat boolean according time
   NowTime += delta;
   if (NowTime%MSPerBeat > MSPerBeat-InputTolerance || NowTime%MSPerBeat < InputTolerance)
   {
@@ -447,6 +484,21 @@ function update (time, delta)
     HasFireThisBeat=false;
     IsBeat=false;
   }
+  // Set Player Image according time
+  if (NowTime % (MSPerBeat*2) < MSPerBeat)
+  {
+    player.setTexture('Player');
+    enemiesAnim(0);
+  }
+  else
+  {
+    player.setTexture('Player2');
+    enemiesAnim(1);
+  }
+
+  if (isWin) UI_Win.alpha += 0.005*delta;
+  if (isLose) UI_Lose.alpha += 0.005*delta;
+
 
   // Constrain velocity of player
   constrainVelocity(player, 350);
@@ -454,6 +506,6 @@ function update (time, delta)
   //TODO: Change Enemies Behaviour, to adpat Music
   enemiesFire(enemies, time, this);
 
-  CheckGameOver(player,enemies);
+  if (!isWin && !isLose) CheckGameOver(player,enemies);
 
 }
