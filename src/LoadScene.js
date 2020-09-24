@@ -21,7 +21,7 @@ class LoadScene extends Phaser.Scene{
 
         var progressBar = this.add.graphics();
         var progressBox = this.add.graphics();
-        progressBox.fillStyle(0x222222, 0.8);
+        progressBox.fillStyle(0xffffff, 0.3);
         progressBox.fillRect(240, 270, 320, 50);
         var width = this.cameras.main.width;
         var height = this.cameras.main.height;
@@ -30,15 +30,16 @@ class LoadScene extends Phaser.Scene{
             y: height / 2 - 50,
             text: 'Loading...',
             style: {
-                font: '20px monospace',
-                fill: '#ffffff'
+                fontFamily: 'font1',
+                fontSize: '24px',
+                fill: '#e0e0e0'
             }
         });
         loadingText.setOrigin(0.5, 0.5);
 
         this.load.on("progress",function (value){
              progressBar.clear();
-             progressBar.fillStyle(0xffffff, 1);
+             progressBar.fillStyle(0xff8400, 1);
              progressBar.fillRect(250, 280, 300 * value, 30);
              console.log(value);
         });
@@ -51,7 +52,7 @@ class LoadScene extends Phaser.Scene{
     }
     create()
     {
-        this.add.text(20, 20, "Loading game...");
+        //this.add.text(20, 20, "Loading game...", { fontFamily: 'font1', fontSize: '48px', fill: '#ffffff' });
         this.scene.start("MenuScene");
     }
 }

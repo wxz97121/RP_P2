@@ -219,9 +219,9 @@ function preload ()
 function create ()
 {
   // Set score tracking bar
-  scoreText = this.add.text(16, 16, 'score: < 0 >', { fontSize: '48px', fill: '#000' }).setDepth(1);
+  scoreText = this.add.text(16, 16, 'score: < 0 >', { fontFamily: 'font1', fontSize: '48px', fill: '#e0e0e0' }).setDepth(1);
   // Set health tracking bar
-  healthText = this.add.text(1116, 16, 'health: ', { fontSize: '48px', fill: '#000' }).setDepth(1);
+  healthText = this.add.text(1316, 16, 'health: ', { fontFamily: 'font1', fontSize: '48px', fill: '#e0e0e0' }).setDepth(1);
   // Set world bounds
   this.physics.world.setBounds(100, 1000, 1400, 1200);
   // Add 2 groups for Bullet objects
@@ -245,11 +245,14 @@ function create ()
   // Add background, player, enemy, UI Elements
   background = this.add.image(800, 600, 'background');
   UI_Win = this.add.image(800,600,'UI_Win').setDepth(1).setVisible(0);
-  TimeScore_Text = this.add.text(this.game.renderer.width + 152, this.game.renderer.height + 160, '0', { fontSize: '60px', fill: '#000' }).setDepth(1).setVisible(0);
+  TimeScore_Text = this.add.text(this.game.renderer.width + 152, this.game.renderer.height + 167, '0', { fontFamily: 'font1', fontSize: '48px', fill: '#a32c10' }).setDepth(1).setVisible(0);
   Exit_Button = this.add.image(this.game.renderer.width, this.game.renderer.height + 250,"exit_button").setDepth(1).setVisible(0);
+  Exit_Button.setScale(1.3);
   UI_Lose = this.add.image(800,600,'UI_Lose').setDepth(1).setVisible(0);
   PlayAgain_Yes_Button = this.add.image(this.game.renderer.width - 50, this.game.renderer.height + 250,"playagain_yes_button").setDepth(1).setVisible(0);
   PlayAgain_No_Button = this.add.image(this.game.renderer.width + 50, this.game.renderer.height + 250,"playagain_no_button").setDepth(1).setVisible(0);
+  PlayAgain_Yes_Button.setScale(1.3);
+  PlayAgain_No_Button.setScale(1.3);
 
   //player = this.physics.add.sprite(800, 1000, 'player_handgun');
   player = this.physics.add.image(800,1000,'Player');
