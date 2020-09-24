@@ -140,7 +140,7 @@ function PlayerLose(player)
 function ScoreSetting (NowTime)
 {
     score = NowTime;
-    scoreText.setText('Score: < ' + score +' >');
+    scoreText.setText('Time: < ' + score +' >');
 }
 function RestartGame()
 {
@@ -219,9 +219,11 @@ function preload ()
 function create ()
 {
   // Set score tracking bar
-  scoreText = this.add.text(16, 16, 'score: < 0 >', { fontFamily: 'font1', fontSize: '48px', fill: '#e0e0e0' }).setDepth(1);
+  scoreText = this.add.text(16, 16, 'Time: < 0 >', { fontFamily: 'font1', fontSize: '48px', fill: '#e0e0e0' }).setDepth(1);
   // Set health tracking bar
-  healthText = this.add.text(1316, 16, 'health: ', { fontFamily: 'font1', fontSize: '48px', fill: '#e0e0e0' }).setDepth(1);
+  
+  //healthText = this.add.text(1316, 16, 'health: ', { fontFamily: 'font1', fontSize: '48px', fill: '#e0e0e0' }).setDepth(1);
+
   // Set world bounds
   this.physics.world.setBounds(100, 1000, 1400, 1200);
   // Add 2 groups for Bullet objects
@@ -266,7 +268,7 @@ function create ()
           enemy.angle = 0;
           enemy.health = 1;
           enemy.lastFired = 0;
-          enemy.setOrigin(0.5, 0.5).setDisplaySize(80, 80).setCollideWorldBounds(true);
+          enemy.setOrigin(0.5, 0.5).setDisplaySize(66, 90).setCollideWorldBounds(true);
           let t = Math.random();
           if (t<0.35)
           {
