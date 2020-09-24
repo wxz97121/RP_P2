@@ -53,8 +53,8 @@ var Bullet = new Phaser.Class({
       this.direction = 0;
       this.xSpeed = 0;
       this.ySpeed = 0;
-      this.setSize(10, 10, true);
-      this.setDisplaySize(75,75);
+      this.setSize(4, 4, true);
+      this.setDisplaySize(30,48);
   },
 
   // Fires a bullet from the player to the reticle
@@ -183,7 +183,7 @@ function preload ()
   this.load.image('projectile4','assets/Sprites/projectile4.png');
 
   this.load.image('target', 'assets/ball.png');
-  this.load.image('background', 'assets/underwater1.png');
+  this.load.image('background', 'assets/Sprites/background_v2.png');
 }
 
 function create ()
@@ -225,7 +225,7 @@ function create ()
           enemy.angle = 0;
           enemy.health = 1;
           enemy.lastFired = 0;
-          enemy.setOrigin(0.5, 0.5).setDisplaySize(132, 120).setCollideWorldBounds(true);
+          enemy.setOrigin(0.5, 0.5).setDisplaySize(120, 120).setCollideWorldBounds(true);
           let t = Math.random();
           if (t<0.35)
           {
@@ -247,10 +247,13 @@ function create ()
 
 
   // Set image/sprite properties
+  UI_Win.setScale(1.5,1.5);
+  UI_Lose.setScale(1.5,1.5);
   background.setOrigin(0.5, 0.5).setDisplaySize(1600, 1200);
-  player.setOrigin(0.5, 0.5).setDisplaySize(132, 120).setCollideWorldBounds(true).setDrag(800);
+  player.setOrigin(0.5, 0.5).setDisplaySize(120, 120).setCollideWorldBounds(true).setDrag(800);
   UI_Win.setOrigin(0.5,0.5);
   UI_Win.alpha = 0;
+
   UI_Lose.setOrigin(0.5,0.5);
   UI_Lose.alpha = 0;
   
