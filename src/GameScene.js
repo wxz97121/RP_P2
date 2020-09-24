@@ -173,6 +173,29 @@ function SwitchInputMode()
   }
 }
 
+isBarrierExist = true;
+function SwitchBarrier(barriers)
+{
+  var barriesArray = barriers.getChildren();
+  if (isBarrierExist)
+  {
+    for (var i = 0; i < barriesArray.length; i++) 
+    {
+      barriesArray[i].setActive(false).setVisible(false);
+      barriesArray[i].alpha = 0;
+    }
+  }
+  else
+  {
+    for (var i = 0; i < barriesArray.length; i++) 
+    {
+      barriesArray[i].setActive(true).setVisible(true);
+      barriesArray[i].alpha = 1;
+    }
+  }
+  isBarrierExist = !isBarrierExist;
+}
+
 var isLose = false, isWin = false;
 function CheckGameOver(player,enemies)
 {
@@ -214,6 +237,26 @@ function preload ()
   this.load.image('projectile4','assets/Sprites/projectile4.png');
 
   this.load.image('background', 'assets/Sprites/background_v2.png');
+  this.load.image('Barrier','assets/Sprites/barrier.png');
+}
+
+function BulletHitCallback(playerBullet, enemyBullet)
+{
+  if(playerBullet.active===true && enemyBullet.active===true)
+  { 
+    playerBullet.setActive(false).setVisible(false);
+    enemyBullet.setActive(false).setVisible(false);
+  }
+}
+
+function BarrierHitCallback(Bullet, Barrier)
+{
+  if(Bullet.active===true && Barrier.active===true)
+  {  
+    Bullet.setActive(false).setVisible(false);
+    Barrier.alpha -= 0.1;
+    if (Barrier.alpha<=0.4) Barrier.setActive(false).setVisible(false);
+  }
 }
 
 function create ()
@@ -230,8 +273,11 @@ function create ()
 
   playerBullets = this.physics.add.group({ classType: Bullet, runChildUpdate: true });
   enemyBullets = this.physics.add.group({ classType: Bullet, runChildUpdate: true });
+
   enemies = this.physics.add.group();
-  this.physics.add.collider(enemies,playerBullets,enemyHitCallback)
+  barriers = this.physics.add.group();
+  
+
 
     //Play Music
     this.sound.play("title_bgm",{
@@ -247,7 +293,7 @@ function create ()
   // Add background, player, enemy, UI Elements
   background = this.add.image(800, 600, 'background');
   UI_Win = this.add.image(800,600,'UI_Win').setDepth(1).setVisible(0);
-  TimeScore_Text = this.add.text(this.game.renderer.width + 152, this.game.renderer.height + 167, '0', { fontFamily: 'font1', fontSize: '48px', fill: '#a32c10' }).setDepth(1).setVisible(0);
+  TimeScore_Text = this.add.text(this.game.renderer.width + 152, this.game.renderer.height + 167, '0', { fontFamily: 'font1', fontSize: '48px', fill: '#a32c10' }).setDepth(1).setVisible(0);  
   Exit_Button = this.add.image(this.game.renderer.width, this.game.renderer.height + 250,"exit_button").setDepth(1).setVisible(0);
   Exit_Button.setScale(1.3);
   UI_Lose = this.add.image(800,600,'UI_Lose').setDepth(1).setVisible(0);
@@ -255,12 +301,20 @@ function create ()
   PlayAgain_No_Button = this.add.image(this.game.renderer.width + 50, this.game.renderer.height + 250,"playagain_no_button").setDepth(1).setVisible(0);
   PlayAgain_Yes_Button.setScale(1.3);
   PlayAgain_No_Button.setScale(1.3);
+  
 
   //player = this.physics.add.sprite(800, 1000, 'player_handgun');
   player = this.physics.add.image(800,1000,'Player');
   player.rotation = 0;
-  this.physics.add.collider(player,enemyBullets,playerHitCallback)
   
+  //Add Collision Event
+  this.physics.add.collider(enemies,playerBullets,enemyHitCallback);
+  this.physics.add.collider(player,enemyBullets,playerHitCallback);
+  this.physics.add.collider(playerBullets,enemyBullets,BulletHitCallback);
+  this.physics.add.collider(playerBullets,barriers,BarrierHitCallback);
+  this.physics.add.collider(enemyBullets,barriers,BarrierHitCallback);
+
+  // Add Enemies 
   for (var i = 0; i < 9; i++)
       for(var j = 0; j < 4; j++)
       {
@@ -288,6 +342,17 @@ function create ()
           enemies.add(enemy);
       }
 
+  
+  // Add Barriers
+  for (var i = 0; i < 4; i++)
+  {
+    barrier = this.physics.add.image(200+400*i, 850, 'Barrier');
+    barrier.setOrigin(0.5, 0.5).setDisplaySize(153.6, 76.8).setCollideWorldBounds(true);
+    barriers.add(barrier);
+  }
+  isBarrierExist = true;
+  SwitchBarrier(barriers);
+  
 
   // Set image/sprite properties
   UI_Win.setScale(1.5,1.5);
@@ -304,7 +369,7 @@ function create ()
   //scene.time.delayedCall(MSPerBeat-InputTolerance,)
 
   // Set sprite variables
-  player.health = 3;
+  player.health = 1;
 
 
   // Set camera properties
@@ -318,13 +383,18 @@ function create ()
       'left': Phaser.Input.Keyboard.KeyCodes.LEFT,
       'right': Phaser.Input.Keyboard.KeyCodes.RIGHT,
       'space': Phaser.Input.Keyboard.KeyCodes.SPACE,
-      'F': Phaser.Input.Keyboard.KeyCodes.F
+      'F': Phaser.Input.Keyboard.KeyCodes.F,
+      'H': Phaser.Input.Keyboard.KeyCodes.H
   });
   this.input.keyboard.on('keydown_F', function (event) 
   {
     SwitchInputMode();
   });
 
+  this.input.keyboard.on('keydown_H',function(event)
+  {
+    SwitchBarrier(barriers);
+  } )
 
   this.input.keyboard.on('keydown_LEFT', function (event) 
   {
@@ -406,34 +476,11 @@ function enemyHitCallback(enemyHit, bulletHit)
 
 function playerHitCallback(playerHit, bulletHit)
 {
-  playerHit.health--;
-  // Reduce health of player
-  //player.alpha = 0;
-  /*
-  if (bulletHit.active === true && playerHit.active === true)
+  if (bulletHit.active === true)
   {
-      playerHit.health = playerHit.health - 1;
-      console.log("Player hp: ", playerHit.health);
-
-      // Kill hp sprites and kill player if health <= 0
-      if (playerHit.health == 2)
-      {
-          hp3.destroy();
-      }
-      else if (playerHit.health == 1)
-      {
-          hp2.destroy();
-      }
-      else
-      {
-          hp1.destroy();
-          // Game over state should execute here
-      }
-
-      // Destroy bullet
-      bulletHit.setActive(false).setVisible(false);
+    playerHit.health--;
+    bulletHit.setActive(false).setVisible(false);
   }
-  */
 }
 
 function enemiesAnim(index)
@@ -450,18 +497,9 @@ function enemiesFire(enemies, time, gameObject)
 {
   if (!enemies) return;
   var enemiesArray = enemies.getChildren();
-  /*
-  for (var enemy in enemiesArray)
-  {
-      enemyFire(enemy,time,gameObject);
-  }
-  */
-
-  //console.log(Math.random());
   for (var i = 0; i < enemiesArray.length; i++) 
   {
-      
-          enemyFire(enemiesArray[i],time,gameObject);
+    enemyFire(enemiesArray[i],time,gameObject);
   }
   
 }
