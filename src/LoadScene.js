@@ -10,9 +10,13 @@ class LoadScene extends Phaser.Scene{
     preload()
     {
         this.load.image('title_bg','assets/Images/background.png');
-        this.load.image('game_bg', 'assets/underwater1.png');
         this.load.image('play_button','assets/Images/playbutton.png');
-        this.load.image('option_button','assets/Images/optionbutton.png');
+        this.load.image('option_button','assets/Images/optionbutton.png');  
+        this.load.image('UI_Win','assets/Images/UI_Win.png');
+        this.load.image('UI_Lose','assets/Images/UI_Lose.png');
+        this.load.image('playagain_yes_button','assets/Images/playagain_yes_button.png');
+        this.load.image('playagain_no_button','assets/Images/playagain_no_button.png');
+        this.load.image('exit_button','assets/Images/exitbutton.png');
         this.load.audio('title_bgm','assets/Audio/bgm.wav')
 
         var progressBar = this.add.graphics();

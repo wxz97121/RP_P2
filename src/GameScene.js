@@ -1,8 +1,6 @@
 /** @type {import("../defs/phaser")} */
 /** @type {import("../defs/matter")} */
 
-
-
 /*
 var sceneConfig = {
   preload: preload,
@@ -38,6 +36,9 @@ var InputTolerance = 125;
 var MSPerBeat = 375;
 var HasFireThisBeat = false;
 var NowTime;
+var score = 0.0;
+var scoreText;
+var healthText;
 var Bullet = new Phaser.Class({
 
   Extends: Phaser.GameObjects.Image,
@@ -100,28 +101,59 @@ var Bullet = new Phaser.Class({
 function PlayerWin()
 {
   //TODO: WIN EFFECT
+  player.body.velocity.x = 0;
+  player.body.velocity.y = 0;
+  player.alpha = 0;
   game.sound.setRate(2)
-  scene.time.delayedCall(1000,RestartGame);
   isWin = true;
+  UI_Win.setVisible(1);
+  TimeScore_Text.setVisible(1);
+  TimeScore_Text.setText(score);
+  Exit_Button.setVisible(1);
+  Exit_Button.setInteractive();
+  Exit_Button.on("pointerup", ()=>{
+      ExitGame();
+  })
+  //scene.time.delayedCall(4000,RestartGame);
 }
 
 function PlayerLose(player)
 {
-
   player.body.velocity.x = 0;
   player.body.velocity.y = 0;
   player.alpha = 0;
   game.sound.setRate(0.5);
-  scene.time.delayedCall(1000,RestartGame);
   isLose = true;
+  // Activate the button
+  UI_Lose.setVisible(1);
+  PlayAgain_Yes_Button.setVisible(1);
+  PlayAgain_No_Button.setVisible(1);
+  PlayAgain_Yes_Button.setInteractive();
+  PlayAgain_Yes_Button.on("pointerup", ()=>{
+      RestartGame();
+  })
+  PlayAgain_No_Button.setInteractive();
+  PlayAgain_No_Button.on("pointerup", ()=>{
+      ExitGame();
+  })
+}
+function ScoreSetting (NowTime)
+{
+    score = NowTime;
+    scoreText.setText('Score: < ' + score +' >');
 }
 function RestartGame()
 {
   game.sound.setRate(1);
   game.sound.stopAll();
-  //game.scene.stop("GameScene");
   game.scene.start("GameScene");
-  
+}
+function ExitGame()
+{
+  game.sound.setRate(1);
+  game.sound.stopAll();
+  game.scene.stop("GameScene");
+  game.scene.start("LoadScene");
 }
 
 isMoveByForce = true;
@@ -159,9 +191,12 @@ function preload ()
 {
   // Load in images and sprites
   console.log("GameScene Loaded");
+  /*
   this.load.spritesheet('player_handgun', 'assets/player_handgun.png',
       { frameWidth: 66, frameHeight: 60 }
   ); // Made by tokkatrain: https://tokkatrain.itch.io/top-down-basic-set
+  */
+
   this.load.image('Player','assets/Sprites/Character_back1.png');
   this.load.image('Player2','assets/Sprites/Character_back2.png');
 
@@ -173,21 +208,20 @@ function preload ()
   this.load.image('Enemy2_2','assets/Sprites/enemy_b2.png');
   this.load.image('Enemy3_2','assets/Sprites/enemy_c2.png');
 
-  this.load.image('UI_Win','assets/Sprites/UI_Win.png');
-  this.load.image('UI_Lose','assets/Sprites/UI_Lose.png');
-
-
   this.load.image('projectile1','assets/Sprites/projectile1.png');
   this.load.image('projectile2','assets/Sprites/projectile2.png');
   this.load.image('projectile3','assets/Sprites/projectile3.png');
   this.load.image('projectile4','assets/Sprites/projectile4.png');
 
-  this.load.image('target', 'assets/ball.png');
   this.load.image('background', 'assets/Sprites/background_v2.png');
 }
 
 function create ()
 {
+  // Set score tracking bar
+  scoreText = this.add.text(16, 16, 'score: < 0 >', { fontSize: '48px', fill: '#000' }).setDepth(1);
+  // Set health tracking bar
+  healthText = this.add.text(1116, 16, 'health: ', { fontSize: '48px', fill: '#000' }).setDepth(1);
   // Set world bounds
   this.physics.world.setBounds(100, 1000, 1400, 1200);
   // Add 2 groups for Bullet objects
@@ -210,8 +244,12 @@ function create ()
 
   // Add background, player, enemy, UI Elements
   background = this.add.image(800, 600, 'background');
-  UI_Win = this.add.image(800,600,'UI_Win');
-  UI_Lose = this.add.image(800,600,'UI_Lose');
+  UI_Win = this.add.image(800,600,'UI_Win').setDepth(1).setVisible(0);
+  TimeScore_Text = this.add.text(this.game.renderer.width + 152, this.game.renderer.height + 160, '0', { fontSize: '60px', fill: '#000' }).setDepth(1).setVisible(0);
+  Exit_Button = this.add.image(this.game.renderer.width, this.game.renderer.height + 250,"exit_button").setDepth(1).setVisible(0);
+  UI_Lose = this.add.image(800,600,'UI_Lose').setDepth(1).setVisible(0);
+  PlayAgain_Yes_Button = this.add.image(this.game.renderer.width - 50, this.game.renderer.height + 250,"playagain_yes_button").setDepth(1).setVisible(0);
+  PlayAgain_No_Button = this.add.image(this.game.renderer.width + 50, this.game.renderer.height + 250,"playagain_no_button").setDepth(1).setVisible(0);
 
   //player = this.physics.add.sprite(800, 1000, 'player_handgun');
   player = this.physics.add.image(800,1000,'Player');
@@ -221,11 +259,11 @@ function create ()
   for (var i = 0; i < 9; i++)
       for(var j = 0; j < 4; j++)
       {
-          enemy = this.physics.add.image(200+150*i, 100+150*j, 'player_handgun');
+          enemy = this.physics.add.image(200+150*i, 100+150*j, 'Enemy1_1');
           enemy.angle = 0;
           enemy.health = 1;
           enemy.lastFired = 0;
-          enemy.setOrigin(0.5, 0.5).setDisplaySize(120, 120).setCollideWorldBounds(true);
+          enemy.setOrigin(0.5, 0.5).setDisplaySize(80, 80).setCollideWorldBounds(true);
           let t = Math.random();
           if (t<0.35)
           {
@@ -323,6 +361,7 @@ function create ()
       if (!IsBeat)
       {
         this.cameras.main.shake(500);
+        NowTime += 5000 // Time Punishment
         return;
       }
       if (HasFireThisBeat) return;
@@ -338,9 +377,6 @@ function create ()
       }
       
   },this);
-
-  
-
 }
 
 
@@ -487,6 +523,11 @@ function update (time, delta)
     HasFireThisBeat=false;
     IsBeat=false;
   }
+  // Set Score/Time Accounting
+  if(!isWin && !isLose)
+  {
+    ScoreSetting((Math.round(NowTime/1000)));
+  }
   // Set Player Image according time
   if (NowTime % (MSPerBeat*2) < MSPerBeat)
   {
@@ -502,7 +543,6 @@ function update (time, delta)
   if (isWin) UI_Win.alpha += 0.005*delta;
   if (isLose) UI_Lose.alpha += 0.005*delta;
 
-
   // Constrain velocity of player
   constrainVelocity(player, 350);
 
@@ -510,5 +550,14 @@ function update (time, delta)
   enemiesFire(enemies, time, this);
 
   if (!isWin && !isLose) CheckGameOver(player,enemies);
+
+  // Debug for Win
+  this.input.keyboard.on(Phaser.Input.Keyboard.Events.ANY_KEY_DOWN, (event) => {
+    switch(event.code) {
+        case 'Digit1':
+           PlayerWin();
+        break;
+    }
+  });
 
 }
