@@ -156,44 +156,44 @@ function ExitGame()
   game.scene.start("LoadScene");
 }
 
-isMoveByForce = true;
+//isMoveByForce = true;
 function SwitchInputMode()
 {
-  if (isMoveByForce)
-  {
+  // if (isMoveByForce)
+  // {
     console.log("Move mode: Move By Velocity");
     isMoveByForce = false;
     player.setDrag(0);
-  }
-  else
-  {
-    console.log("Move mode: Move By Force");
-    isMoveByForce = true;
-    player.setDrag(800);
-  }
+  //}
+  // else
+  // {
+  //   console.log("Move mode: Move By Force");
+  //   //isMoveByForce = true;
+  //   player.setDrag(800);
+  // }
 }
 
 isBarrierExist = true;
 function SwitchBarrier(barriers)
 {
   var barriesArray = barriers.getChildren();
-  if (isBarrierExist)
-  {
-    for (var i = 0; i < barriesArray.length; i++) 
-    {
-      barriesArray[i].setActive(false).setVisible(false);
-      barriesArray[i].alpha = 0;
-    }
-  }
-  else
-  {
+  // if (isBarrierExist)
+  // {
+  //   for (var i = 0; i < barriesArray.length; i++) 
+  //   {
+  //     barriesArray[i].setActive(false).setVisible(false);
+  //     barriesArray[i].alpha = 0;
+  //   }
+  // }
+  //else
+  //{
     for (var i = 0; i < barriesArray.length; i++) 
     {
       barriesArray[i].setActive(true).setVisible(true);
       barriesArray[i].alpha = 1;
     }
-  }
-  isBarrierExist = !isBarrierExist;
+  //}
+  //isBarrierExist = !isBarrierExist;
 }
 
 var isLose = false, isWin = false;
@@ -288,7 +288,7 @@ function create ()
   isLose = false;
   isWin = false;
   NowTime = 0;
-  isMoveByForce = true;
+  //isMoveByForce = true;
 
   // Add background, player, enemy, UI Elements
   background = this.add.image(800, 600, 'background');
@@ -358,7 +358,7 @@ function create ()
   UI_Win.setScale(1.5,1.5);
   UI_Lose.setScale(1.5,1.5);
   background.setOrigin(0.5, 0.5).setDisplaySize(1600, 1200);
-  player.setOrigin(0.5, 0.5).setDisplaySize(120, 120).setCollideWorldBounds(true).setDrag(800);
+  player.setOrigin(0.5, 0.5).setDisplaySize(120, 120).setCollideWorldBounds(true).setDrag(0);
   UI_Win.setOrigin(0.5,0.5);
   UI_Win.alpha = 0;
 
@@ -388,42 +388,42 @@ function create ()
   });
   this.input.keyboard.on('keydown_F', function (event) 
   {
-    SwitchInputMode();
+    //SwitchInputMode();
   });
 
   this.input.keyboard.on('keydown_H',function(event)
   {
-    SwitchBarrier(barriers);
+    //SwitchBarrier(barriers);
   } )
 
   this.input.keyboard.on('keydown_LEFT', function (event) 
   {
     if (!isLose)
     {
-      if (isMoveByForce) player.setAccelerationX(-1200);
-      else player.setVelocityX(-400);
+      //if (isMoveByForce) player.setAccelerationX(-1200);
+      player.setVelocityX(-400);
     }
   });
   this.input.keyboard.on('keydown_RIGHT', function (event) {
     if (!isLose)
     {
-      if (isMoveByForce) player.setAccelerationX(1200);
-      else player.setVelocityX(400);
+      //if (isMoveByForce) player.setAccelerationX(1200);
+      player.setVelocityX(400);
     }
   });
 
   this.input.keyboard.on('keyup_LEFT', function (event) {
       if (moveKeys['right'].isUp)
       {
-        if (isMoveByForce) player.setAccelerationX(0);
-        else player.setVelocityX(0);
+        //if (isMoveByForce) player.setAccelerationX(0);
+        player.setVelocityX(0);
       }
   });
   this.input.keyboard.on('keyup_RIGHT', function (event) {
       if (moveKeys['left'].isUp)
       {
-        if (isMoveByForce) player.setAccelerationX(0);
-        else player.setVelocityX(0);
+        //if (isMoveByForce) player.setAccelerationX(0);
+        player.setVelocityX(0);
       }
   });
 
