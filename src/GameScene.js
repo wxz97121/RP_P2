@@ -744,7 +744,7 @@ function UpdateEnemies()
         }
         break;
       case 6:
-        if(NowTime%(MSPerBeat/4) < 20)
+        if(NowTime%(MSPerBeat/8) < 20)
         {
           EnemyTimer = 0;
           if (!enemies) return;
