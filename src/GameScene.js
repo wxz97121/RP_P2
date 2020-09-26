@@ -48,6 +48,7 @@ var healthText;
 var enemyCount = 0;
 var enemyPhase = 0;
 var enemyMoveDirection = 1;
+var enemyOnStage = false;
 var ScoreBoardTextArray = new Array();
 var Panel;
 var Bullet = new Phaser.Class({
@@ -240,7 +241,7 @@ function SwitchBarrier(barriers)
 var isLose = false, isWin = false;
 function CheckGameOver(player,enemies)
 {
-  if (player.health==0) PlayerLose(player);
+  if (player.health==0 || enemyOnStage) PlayerLose(player);
   if (enemyCount == 0 && !isWin && !isLose) PlayerWin();
 }
 
@@ -766,6 +767,7 @@ function UpdateEnemies()
       for (var i = 0; i < enemiesArray.length; i++)
       {
         enemiesArray[i].y += 50;
+        if(enemiesArray[i].y >= 975) enemyOnStage = true;
       }
     }
   }
