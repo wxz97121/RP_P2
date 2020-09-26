@@ -17,7 +17,8 @@ class LoadScene extends Phaser.Scene{
         this.load.image('playagain_yes_button','assets/Images/playagain_yes_button.png');
         this.load.image('playagain_no_button','assets/Images/playagain_no_button.png');
         this.load.image('exit_button','assets/Images/exitbutton.png');
-        this.load.audio('title_bgm','assets/Audio/bgm.wav')
+        this.load.audio('title_bgm','assets/Audio/bgm.wav');
+        this.load.html('InputFieldHTML','assets/HTML/InputField.html');
 
         var progressBar = this.add.graphics();
         var progressBox = this.add.graphics();

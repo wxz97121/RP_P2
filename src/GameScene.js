@@ -25,6 +25,12 @@ class GameScene extends Phaser.Scene{
       super("GameScene");
 
   }
+  Playername;
+  init(data) {
+    console.log(data);
+    this.Playername = data.Playername;
+  }
+  
   preload =preload;
   create = create;
   update= update;   
@@ -39,6 +45,8 @@ var NowTime;
 var score = 0.0;
 var scoreText;
 var healthText;
+var ScoreBoardTextArray = new Array();
+var Panel;
 var Bullet = new Phaser.Class({
 
   Extends: Phaser.GameObjects.Image,
@@ -97,6 +105,20 @@ var Bullet = new Phaser.Class({
   }
 
 });
+function ShowPanel(data) 
+{
+  if (data === '') return;
+  obj = JSON.parse(data)
+  console.log(obj)
+  for (var i = 0; i < 10; i++ ) 
+  {
+    ScoreBoardTextArray[i].setActive(true).setVisible(true);
+    ScoreBoardTextArray[i].text = obj[i][0] + "  " + obj[i][1];
+  }
+  Panel.setVisible(true)
+  Panel.alpha = 1;
+}
+
 
 function PlayerWin()
 {
@@ -111,6 +133,19 @@ function PlayerWin()
   TimeScore_Text.setText(score);
   Exit_Button.setVisible(1);
   Exit_Button.setInteractive();
+  var data = ""
+  try{
+    console.log('POST BEGIN');
+    var xhr = new XMLHttpRequest();
+    //xhr.setRequestHeader('content-type', 'application/json');
+    xhr.open("POST",'http://localhost:8080',false);
+    xhr.send(scene.Playername + '\n' + score.toString());
+    data = xhr.responseText;
+  }
+  catch{
+    data = '';
+  }
+  ShowPanel(data);
   Exit_Button.on("pointerup", ()=>{
       ExitGame();
   })
@@ -153,7 +188,9 @@ function ExitGame()
   game.sound.setRate(1);
   game.sound.stopAll();
   game.scene.stop("GameScene");
-  game.scene.start("LoadScene");
+  //let Name = game.scene.Playername;
+  //console.log(Name);
+  game.scene.start("MenuScene",{Playername: scene.Playername});
 }
 
 //isMoveByForce = true;
@@ -207,7 +244,7 @@ function CheckGameOver(player,enemies)
   {
      if (enemiesArray[i].active) AliveEnemy++;
   }
-  if (AliveEnemy == 0) PlayerWin();
+  if (AliveEnemy == 0 && !isWin && !isLose) PlayerWin();
 }
 
 function preload ()
@@ -238,6 +275,7 @@ function preload ()
 
   this.load.image('background', 'assets/Sprites/background_v2.png');
   this.load.image('Barrier','assets/Sprites/barrier.png');
+  this.load.image('Panel', 'assets/Sprites/Panel.png')
 }
 
 function BulletHitCallback(playerBullet, enemyBullet)
@@ -261,6 +299,7 @@ function BarrierHitCallback(Bullet, Barrier)
 
 function create ()
 {
+  console.log(this.Playername);
   // Set score tracking bar
   scoreText = this.add.text(16, 16, 'Time: < 0 >', { fontFamily: 'font1', fontSize: '48px', fill: '#e0e0e0' }).setDepth(1);
   // Set health tracking bar
@@ -301,6 +340,13 @@ function create ()
   PlayAgain_No_Button = this.add.image(this.game.renderer.width + 50, this.game.renderer.height + 250,"playagain_no_button").setDepth(1).setVisible(0);
   PlayAgain_Yes_Button.setScale(1.3);
   PlayAgain_No_Button.setScale(1.3);
+
+  Panel = this.add.image(1300,600,'Panel').setDepth(1).setVisible(false).setDisplaySize(600,800).setOrigin(0.5,0.5);
+  for(var i = 0; i < 10; i++)
+  {
+    var ScoreText = this.add.text(1025, 240 + i*75 , 'No Record', { fontFamily: 'font1', fontSize: '48px', fill: '#FFFFFF' }).setDepth(2).setVisible(0);  
+    ScoreBoardTextArray.push(ScoreText)
+  }
   
 
   //player = this.physics.add.sprite(800, 1000, 'player_handgun');
@@ -598,7 +644,7 @@ function update (time, delta)
   this.input.keyboard.on(Phaser.Input.Keyboard.Events.ANY_KEY_DOWN, (event) => {
     switch(event.code) {
         case 'Digit1':
-           PlayerWin();
+           if (!isWin && !isLose) PlayerWin();
         break;
     }
   });
