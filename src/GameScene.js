@@ -45,6 +45,9 @@ var NowTime;
 var score = 0.0;
 var scoreText;
 var healthText;
+var enemyCount = 0;
+var enemyPhase = 0;
+var enemyMoveDirection = 1;
 var ScoreBoardTextArray = new Array();
 var Panel;
 var Bullet = new Phaser.Class({
@@ -119,7 +122,6 @@ function ShowPanel(data)
   Panel.alpha = 1;
 }
 
-
 function PlayerWin()
 {
   //TODO: WIN EFFECT
@@ -128,6 +130,7 @@ function PlayerWin()
   player.alpha = 0;
   game.sound.setRate(2)
   isWin = true;
+  enemyPhase = 0;
   UI_Win.setVisible(1);
   TimeScore_Text.setVisible(1);
   TimeScore_Text.setText(score);
@@ -159,6 +162,7 @@ function PlayerLose(player)
   player.alpha = 0;
   game.sound.setRate(0.5);
   isLose = true;
+  enemyPhase = 0;
   // Activate the button
   UI_Lose.setVisible(1);
   PlayAgain_Yes_Button.setVisible(1);
@@ -237,14 +241,7 @@ var isLose = false, isWin = false;
 function CheckGameOver(player,enemies)
 {
   if (player.health==0) PlayerLose(player);
-
-  var enemiesArray = enemies.getChildren();
-  var AliveEnemy = 0;
-  for (var i = 0; i < enemiesArray.length; i++) 
-  {
-     if (enemiesArray[i].active) AliveEnemy++;
-  }
-  if (AliveEnemy == 0 && !isWin && !isLose) PlayerWin();
+  if (enemyCount == 0 && !isWin && !isLose) PlayerWin();
 }
 
 function preload ()
@@ -361,6 +358,7 @@ function create ()
   this.physics.add.collider(enemyBullets,barriers,BarrierHitCallback);
 
   // Add Enemies 
+  enemyCount = 0;
   for (var i = 0; i < 9; i++)
       for(var j = 0; j < 4; j++)
       {
@@ -386,7 +384,9 @@ function create ()
             enemy.TextureArray = ['Enemy3_1','Enemy3_2'];
           }
           enemies.add(enemy);
+          enemyCount++;
       }
+      enemyPhase = 1;
 
   
   // Add Barriers
@@ -500,7 +500,6 @@ function create ()
   },this);
 }
 
-
 function enemyHitCallback(enemyHit, bulletHit)
 {
   // Reduce health of enemy
@@ -517,6 +516,14 @@ function enemyHitCallback(enemyHit, bulletHit)
 
       // Destroy bullet
       bulletHit.setActive(false).setVisible(false);
+      
+      //Update enemy count and phase (if needed)
+      enemyCount--;
+      if(enemyCount < 20) enemyPhase = 2;
+      if(enemyCount < 10) enemyPhase = 3;
+      if(enemyCount == 4) enemyPhase = 4;
+      if(enemyCount == 2) enemyPhase = 5
+      if(enemyCount == 1) enemyPhase = 6;
   }
 }
 
@@ -632,6 +639,7 @@ function update (time, delta)
   if (isWin) UI_Win.alpha += 0.005*delta;
   if (isLose) UI_Lose.alpha += 0.005*delta;
 
+  UpdateEnemies();
   // Constrain velocity of player
   constrainVelocity(player, 350);
 
@@ -648,5 +656,116 @@ function update (time, delta)
         break;
     }
   });
-
 }
+
+function UpdateEnemies()
+  {
+    var switchDirections = false;
+    switch(enemyPhase)
+    {
+      case 1:
+        if(NowTime%(MSPerBeat*4) < 20)
+        {
+          EnemyTimer = 0;
+          if (!enemies) return;
+          var enemiesArray = enemies.getChildren();
+          for (var i = 0; i < enemiesArray.length; i++) 
+          {
+            enemiesArray[i].x += 50*enemyMoveDirection
+            if((enemiesArray[i].x <= 50 || enemiesArray[i].x >= 1550) && enemiesArray[i].active)
+            {
+              switchDirections = true;
+            }
+          }
+        }
+        break;
+      case 2:
+        if(NowTime%(MSPerBeat*2) < 20)
+        {
+          EnemyTimer = 0;
+          if (!enemies) return;
+          var enemiesArray = enemies.getChildren();
+          for (var i = 0; i < enemiesArray.length; i++) 
+          {
+            enemiesArray[i].x += 50*enemyMoveDirection
+            if((enemiesArray[i].x <= 50 || enemiesArray[i].x >= 1550) && enemiesArray[i].active)
+            {
+              switchDirections = true;
+            }
+          }
+        }
+        break;
+      case 3:
+        if(NowTime%(MSPerBeat) < 20)
+        {
+          EnemyTimer = 0;
+          if (!enemies) return;
+          var enemiesArray = enemies.getChildren();
+          for (var i = 0; i < enemiesArray.length; i++) 
+          {
+            enemiesArray[i].x += 50*enemyMoveDirection
+            if((enemiesArray[i].x <= 50 || enemiesArray[i].x >= 1550) && enemiesArray[i].active)
+            {
+              switchDirections = true;
+            }
+          }
+        }
+        break;
+      case 4:
+        if(NowTime%(MSPerBeat/2) < 20)
+        {
+          EnemyTimer = 0;
+          if (!enemies) return;
+          var enemiesArray = enemies.getChildren();
+          for (var i = 0; i < enemiesArray.length; i++) 
+          {
+            enemiesArray[i].x += 50*enemyMoveDirection
+            if((enemiesArray[i].x <= 50 || enemiesArray[i].x >= 1550) && enemiesArray[i].active)
+            {
+              switchDirections = true;
+            }
+          }
+        }
+        break;
+      case 5:
+        if(NowTime%(MSPerBeat/4) < 20)
+        {
+          EnemyTimer = 0;
+          if (!enemies) return;
+          var enemiesArray = enemies.getChildren();
+          for (var i = 0; i < enemiesArray.length; i++) 
+          {
+            enemiesArray[i].x += 50*enemyMoveDirection
+            if((enemiesArray[i].x <= 50 || enemiesArray[i].x >= 1550) && enemiesArray[i].active)
+            {
+              switchDirections = true;
+            }
+          }
+        }
+        break;
+      case 6:
+        if(NowTime%(MSPerBeat/4) < 20)
+        {
+          EnemyTimer = 0;
+          if (!enemies) return;
+          var enemiesArray = enemies.getChildren();
+          for (var i = 0; i < enemiesArray.length; i++) 
+          {
+            enemiesArray[i].x += 50*enemyMoveDirection
+            if((enemiesArray[i].x <= 50 || enemiesArray[i].x >= 1550) && enemiesArray[i].active)
+            {
+              switchDirections = true;
+            }
+          }
+        }
+        break;
+    }
+    if (switchDirections) 
+    {
+      enemyMoveDirection *= -1;
+      for (var i = 0; i < enemiesArray.length; i++)
+      {
+        enemiesArray[i].y += 50;
+      }
+    }
+  }
