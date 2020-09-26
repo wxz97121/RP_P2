@@ -521,7 +521,7 @@ function enemyHitCallback(enemyHit, bulletHit)
       enemyCount--;
       if(enemyCount < 20) enemyPhase = 2;
       if(enemyCount < 10) enemyPhase = 3;
-      if(enemyCount == 4) enemyPhase = 4;
+      if(enemyCount <= 4) enemyPhase = 4;
       if(enemyCount == 2) enemyPhase = 5
       if(enemyCount == 1) enemyPhase = 6;
   }
