@@ -23,6 +23,7 @@ class LoadScene extends Phaser.Scene{
         this.load.image('disc','assets/Images/disc.png');
         this.load.image('beam','assets/Images/beam.png');
         this.load.audio('title_bgm','assets/Audio/bgm.wav')
+        this.load.html('InputFieldHTML','assets/HTML/InputField.html');
 
         var progressBar = this.add.graphics();
         var progressBox = this.add.graphics();

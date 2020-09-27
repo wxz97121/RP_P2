@@ -8,6 +8,9 @@ var Gameconfig = {
     parent: 'phaser-example',
     width: 800,
     height: 800,
+    dom: {
+      createContainer: true
+    },
     physics: {
       default: 'arcade',
       arcade: {

@@ -27,6 +27,12 @@ class GameScene extends Phaser.Scene{
       super("GameScene");
 
   }
+  Playername;
+  init(data) {
+    console.log(data);
+    this.Playername = data.Playername;
+  }
+  
   preload =preload;
   create = create;
   update= update;   
@@ -45,7 +51,15 @@ var Pulsingfactor = 0;
 var score = 0.0;
 var scoreText;
 var healthText;
-var volume = 0.5;
+var volume = 0.5;var enemyCount = 0;
+var enemyPhase = 0;
+var enemyMoveDirection = 1;
+var enemyOnStage = false;
+var switchDirections = false;
+var ScoreBoardTextArray = new Array();
+var Panel;
+
+
 var Bullet = new Phaser.Class({
 
   Extends: Phaser.GameObjects.Image,
@@ -104,6 +118,19 @@ var Bullet = new Phaser.Class({
   }
 
 });
+function ShowPanel(data) 
+{
+  if (data === '') return;
+  obj = JSON.parse(data)
+  console.log(obj)
+  for (var i = 0; i < 10; i++ ) 
+  {
+    ScoreBoardTextArray[i].setActive(true).setVisible(true);
+    ScoreBoardTextArray[i].text = obj[i][0] + "  " + obj[i][1];
+  }
+  Panel.setVisible(true)
+  Panel.alpha = 1;
+}
 
 function IndicatorCreate(BeamL, BeamR, Speed, AlphaFactor)
 {
@@ -170,11 +197,25 @@ function PlayerWin()
   player.alpha = 0;
   game.sound.setRate(2)
   isWin = true;
+  enemyPhase = 0;
   UI_Win.setVisible(1);
   TimeScore_Text.setVisible(1);
   TimeScore_Text.setText(score);
   Exit_Button.setVisible(1);
   Exit_Button.setInteractive();
+  var data = ""
+  try{
+    console.log('POST BEGIN');
+    var xhr = new XMLHttpRequest();
+    //xhr.setRequestHeader('content-type', 'application/json');
+    xhr.open("POST",'http://localhost:8080',false);
+    xhr.send(scene.Playername + '\n' + score.toString());
+    data = xhr.responseText;
+  }
+  catch{
+    data = '';
+  }
+  ShowPanel(data);
   Exit_Button.on("pointerup", ()=>{
       ExitGame();
   })
@@ -187,6 +228,7 @@ function PlayerLose(player)
   player.alpha = 0;
   game.sound.setRate(0.5);
   isLose = true;
+  enemyPhase = 0;
   // Activate the button
   UI_Lose.setVisible(1);
   PlayAgain_Yes_Button.setVisible(1);
@@ -216,61 +258,56 @@ function ExitGame()
   game.sound.setRate(1);
   game.sound.stopAll();
   game.scene.stop("GameScene");
-  game.scene.start("LoadScene");
+  //let Name = game.scene.Playername;
+  //console.log(Name);
+  game.scene.start("MenuScene",{Playername: scene.Playername});
 }
 
-isMoveByForce = true;
+//isMoveByForce = true;
 function SwitchInputMode()
 {
-  if (isMoveByForce)
-  {
+  // if (isMoveByForce)
+  // {
     console.log("Move mode: Move By Velocity");
     isMoveByForce = false;
     player.setDrag(0);
-  }
-  else
-  {
-    console.log("Move mode: Move By Force");
-    isMoveByForce = true;
-    player.setDrag(800);
-  }
+  //}
+  // else
+  // {
+  //   console.log("Move mode: Move By Force");
+  //   //isMoveByForce = true;
+  //   player.setDrag(800);
+  // }
 }
 
 isBarrierExist = true;
 function SwitchBarrier(barriers)
 {
   var barriesArray = barriers.getChildren();
-  if (isBarrierExist)
-  {
-    for (var i = 0; i < barriesArray.length; i++) 
-    {
-      barriesArray[i].setActive(false).setVisible(false);
-      barriesArray[i].alpha = 0;
-    }
-  }
-  else
-  {
+  // if (isBarrierExist)
+  // {
+  //   for (var i = 0; i < barriesArray.length; i++) 
+  //   {
+  //     barriesArray[i].setActive(false).setVisible(false);
+  //     barriesArray[i].alpha = 0;
+  //   }
+  // }
+  //else
+  //{
     for (var i = 0; i < barriesArray.length; i++) 
     {
       barriesArray[i].setActive(true).setVisible(true);
       barriesArray[i].alpha = 1;
     }
-  }
-  isBarrierExist = !isBarrierExist;
+  //}
+  //isBarrierExist = !isBarrierExist;
 }
 
 var isLose = false, isWin = false;
 function CheckGameOver(player,enemies)
 {
-  if (player.health==0) PlayerLose(player);
-
-  var enemiesArray = enemies.getChildren();
-  var AliveEnemy = 0;
-  for (var i = 0; i < enemiesArray.length; i++) 
-  {
-     if (enemiesArray[i].active) AliveEnemy++;
-  }
-  if (AliveEnemy == 0) PlayerWin();
+  if (player.health==0 || enemyOnStage) PlayerLose(player);
+  if (enemyCount == 0 && !isWin && !isLose) PlayerWin();
 }
 
 function preload ()
@@ -301,6 +338,7 @@ function preload ()
 
   this.load.image('background', 'assets/Sprites/background_v2.png');
   this.load.image('Barrier','assets/Sprites/barrier.png');
+  this.load.image('Panel', 'assets/Sprites/Panel.png')
 }
 
 function BulletHitCallback(playerBullet, enemyBullet)
@@ -324,6 +362,7 @@ function BarrierHitCallback(Bullet, Barrier)
 
 function create ()
 {
+  console.log(this.Playername);
   // Set score tracking bar
   scoreText = this.add.text(8, -68, 'Time: < 0 >', { fontFamily: 'font1', fontSize: '48px', fill: '#e0e0e0' }).setDepth(1);
 
@@ -338,7 +377,7 @@ function create ()
   BeamR3 = this.add.image(1600, this.game.renderer.height * 2 - 250, "beam").setDepth(0).setAlpha(0);
 
   // Set world bounds
-  this.physics.world.setBounds(100, 1000, 1400, 1200);
+  this.physics.world.setBounds(0, 1000, 1600, 1200);
 
   // Add 2 groups for Bullet objects
   playerBullets = this.physics.add.group({ classType: Bullet, runChildUpdate: true });
@@ -355,7 +394,7 @@ function create ()
   isLose = false;
   isWin = false;
   NowTime = 0;
-  isMoveByForce = true;
+  //isMoveByForce = true;
 
   // Add background, player, enemy, UI Elements
   background = this.add.image(800, 600, 'background');
@@ -391,6 +430,13 @@ function create ()
   PlayAgain_No_Button = this.add.image(this.game.renderer.width + 50, this.game.renderer.height + 250,"playagain_no_button").setDepth(1).setVisible(0);
   PlayAgain_Yes_Button.setScale(1.3);
   PlayAgain_No_Button.setScale(1.3);
+
+  Panel = this.add.image(1300,600,'Panel').setDepth(1).setVisible(false).setDisplaySize(600,800).setOrigin(0.5,0.5);
+  for(var i = 0; i < 10; i++)
+  {
+    var ScoreText = this.add.text(1025, 240 + i*75 , 'No Record', { fontFamily: 'font1', fontSize: '48px', fill: '#FFFFFF' }).setDepth(2).setVisible(0);  
+    ScoreBoardTextArray.push(ScoreText)
+  }
   
   //player = this.physics.add.sprite(800, 1000, 'player_handgun');
   player = this.physics.add.image(800,1000,'Player');
@@ -404,10 +450,11 @@ function create ()
   this.physics.add.collider(enemyBullets,barriers,BarrierHitCallback);
 
   // Add Enemies 
+  enemyCount = 0;
   for (var i = 0; i < 9; i++)
-      for(var j = 0; j < 4; j++)
+      for(var j = 0; j < 5; j++)
       {
-          enemy = this.physics.add.image(200+150*i, 100+150*j, 'Enemy1_1');
+          enemy = this.physics.add.image(200+125*i, 100+100*j, 'Enemy1_1');
           enemy.angle = 0;
           enemy.health = 1;
           enemy.lastFired = 0;
@@ -429,7 +476,10 @@ function create ()
             enemy.TextureArray = ['Enemy3_1','Enemy3_2'];
           }
           enemies.add(enemy);
+          enemyCount++;
       }
+      enemyPhase = 1;
+      enemyMoveDirection = 1;
 
   // Add Barriers
   for (var i = 0; i < 4; i++)
@@ -445,7 +495,7 @@ function create ()
   UI_Win.setScale(1.5,1.5);
   UI_Lose.setScale(1.5,1.5);
   background.setOrigin(0.5, 0.5).setDisplaySize(1600, 1200);
-  player.setOrigin(0.5, 0.5).setDisplaySize(120, 120).setCollideWorldBounds(true).setDrag(800);
+  player.setOrigin(0.5, 0.5).setDisplaySize(120, 120).setCollideWorldBounds(true).setDrag(0);
   UI_Win.setOrigin(0.5,0.5);
   UI_Win.alpha = 0;
   UI_Lose.setOrigin(0.5,0.5);
@@ -473,42 +523,42 @@ function create ()
   });
   this.input.keyboard.on('keydown_F', function (event) 
   {
-    SwitchInputMode();
+    //SwitchInputMode();
   });
 
   this.input.keyboard.on('keydown_H',function(event)
   {
-    SwitchBarrier(barriers);
+    //SwitchBarrier(barriers);
   } )
 
   this.input.keyboard.on('keydown_LEFT', function (event) 
   {
     if (!isLose)
     {
-      if (isMoveByForce) player.setAccelerationX(-1200);
-      else player.setVelocityX(-400);
+      //if (isMoveByForce) player.setAccelerationX(-1200);
+      player.setVelocityX(-400);
     }
   });
   this.input.keyboard.on('keydown_RIGHT', function (event) {
     if (!isLose)
     {
-      if (isMoveByForce) player.setAccelerationX(1200);
-      else player.setVelocityX(400);
+      //if (isMoveByForce) player.setAccelerationX(1200);
+      player.setVelocityX(400);
     }
   });
 
   this.input.keyboard.on('keyup_LEFT', function (event) {
       if (moveKeys['right'].isUp)
       {
-        if (isMoveByForce) player.setAccelerationX(0);
-        else player.setVelocityX(0);
+        //if (isMoveByForce) player.setAccelerationX(0);
+        player.setVelocityX(0);
       }
   });
   this.input.keyboard.on('keyup_RIGHT', function (event) {
       if (moveKeys['left'].isUp)
       {
-        if (isMoveByForce) player.setAccelerationX(0);
-        else player.setVelocityX(0);
+        //if (isMoveByForce) player.setAccelerationX(0);
+        player.setVelocityX(0);
       }
   });
 
@@ -559,6 +609,14 @@ function enemyHitCallback(enemyHit, bulletHit)
 
       // Destroy bullet
       bulletHit.setActive(false).setVisible(false);
+      
+      //Update enemy count and phase (if needed)
+      enemyCount--;
+      if(enemyCount < 20) enemyPhase = 2;
+      if(enemyCount < 10) enemyPhase = 3;
+      if(enemyCount <= 4) enemyPhase = 4;
+      if(enemyCount == 2) enemyPhase = 5
+      if(enemyCount == 1) enemyPhase = 6;
   }
 }
 
@@ -692,6 +750,7 @@ function update (time, delta)
   if (isWin) UI_Win.alpha += 0.005*delta;
   if (isLose) UI_Lose.alpha += 0.005*delta;
 
+  UpdateEnemies();
   // Constrain velocity of player
   constrainVelocity(player, 350);
 
@@ -704,8 +763,214 @@ function update (time, delta)
   this.input.keyboard.on(Phaser.Input.Keyboard.Events.ANY_KEY_DOWN, (event) => {
     switch(event.code) {
         case 'Digit1':
-           PlayerWin();
+           if (!isWin && !isLose) PlayerWin();
         break;
     }
   });
 }
+
+function UpdateEnemies()
+  {
+    var enemiesArray = enemies.getChildren();
+    switch(enemyPhase)
+    {
+      case 1:
+        if(NowTime%(MSPerBeat*4) < 20)
+        {
+          if(!switchDirections)
+          {
+            if (!enemies) return;
+            for (var i = 0; i < enemiesArray.length; i++) 
+            {
+              if(enemiesArray[i].active)
+              {
+                enemiesArray[i].x += 50*enemyMoveDirection
+                if((enemiesArray[i].x <= 50 || enemiesArray[i].x >= 1550) && enemiesArray[i].active)
+                {
+                  switchDirections = true;
+                }
+              }
+            }
+          }
+          else if (switchDirections)
+          {
+            enemyMoveDirection *= -1;
+            for (var i = 0; i < enemiesArray.length; i++)
+            {
+              if(enemiesArray[i].active)
+              {
+                enemiesArray[i].y += 50;
+                if(enemiesArray[i].y >= 975) enemyOnStage = true;
+              }
+            }
+            switchDirections = false;
+          }
+        }
+        break;
+      case 2:
+        if(NowTime%(MSPerBeat*2) < 20)
+        {
+          if(!switchDirections)
+          {
+            if (!enemies) return;
+            for (var i = 0; i < enemiesArray.length; i++) 
+            {
+              if(enemiesArray[i].active)
+              {
+                enemiesArray[i].x += 50*enemyMoveDirection
+                if((enemiesArray[i].x <= 50 || enemiesArray[i].x >= 1550) && enemiesArray[i].active)
+                {
+                  switchDirections = true;
+                }
+              }
+            }
+          }
+          else if (switchDirections)
+          {
+            enemyMoveDirection *= -1;
+            for (var i = 0; i < enemiesArray.length; i++)
+            {
+              if(enemiesArray[i].active)
+              {
+                enemiesArray[i].y += 50;
+                if(enemiesArray[i].y >= 975) enemyOnStage = true;
+              }
+            }
+            switchDirections = false;
+          }
+        }
+        break;
+      case 3:
+        if(NowTime%(MSPerBeat) < 20)
+        {
+          if(!switchDirections)
+          {
+            if (!enemies) return;
+            for (var i = 0; i < enemiesArray.length; i++) 
+            {
+              if(enemiesArray[i].active)
+              {
+                enemiesArray[i].x += 50*enemyMoveDirection
+                if((enemiesArray[i].x <= 50 || enemiesArray[i].x >= 1550) && enemiesArray[i].active)
+                {
+                  switchDirections = true;
+                }
+              }
+            }
+          }
+          else if (switchDirections)
+          {
+            enemyMoveDirection *= -1;
+            for (var i = 0; i < enemiesArray.length; i++)
+            {
+              if(enemiesArray[i].active)
+              {
+                enemiesArray[i].y += 50;
+                if(enemiesArray[i].y >= 975) enemyOnStage = true;
+              }
+            }
+            switchDirections = false;
+          }
+        }
+        break;
+      case 4:
+        if(NowTime%(MSPerBeat/2) < 20)
+        {
+          if(!switchDirections)
+          {
+            if (!enemies) return;
+            for (var i = 0; i < enemiesArray.length; i++) 
+            {
+              if(enemiesArray[i].active)
+              {
+                enemiesArray[i].x += 50*enemyMoveDirection
+                if((enemiesArray[i].x <= 50 || enemiesArray[i].x >= 1550) && enemiesArray[i].active)
+                {
+                  switchDirections = true;
+                }
+              }
+            }
+          }
+          else if (switchDirections)
+          {
+            enemyMoveDirection *= -1;
+            for (var i = 0; i < enemiesArray.length; i++)
+            {
+              if(enemiesArray[i].active)
+              {
+                enemiesArray[i].y += 50;
+                if(enemiesArray[i].y >= 975) enemyOnStage = true;
+              }
+            }
+            switchDirections = false;
+          }
+        }
+        break;
+      case 5:
+        if(NowTime%(MSPerBeat/4) < 20)
+        {
+          if(!switchDirections)
+          {
+            if (!enemies) return;
+            for (var i = 0; i < enemiesArray.length; i++) 
+            {
+              if(enemiesArray[i].active)
+              {
+                enemiesArray[i].x += 50*enemyMoveDirection
+                if((enemiesArray[i].x <= 50 || enemiesArray[i].x >= 1550) && enemiesArray[i].active)
+                {
+                  switchDirections = true;
+                }
+              }
+            }
+          }
+          else if (switchDirections)
+          {
+            enemyMoveDirection *= -1;
+            for (var i = 0; i < enemiesArray.length; i++)
+            {
+              if(enemiesArray[i].active)
+              {
+                enemiesArray[i].y += 50;
+                if(enemiesArray[i].y >= 975) enemyOnStage = true;
+              }
+            }
+            switchDirections = false;
+          }
+        }
+        break;
+      case 6:
+        if(NowTime%(MSPerBeat/8) < 20)
+        {
+          if(!switchDirections)
+          {
+            if (!enemies) return;
+            for (var i = 0; i < enemiesArray.length; i++) 
+            {
+              if(enemiesArray[i].active)
+              {
+                enemiesArray[i].x += 50*enemyMoveDirection
+                if((enemiesArray[i].x <= 50 || enemiesArray[i].x >= 1550) && enemiesArray[i].active)
+                {
+                  switchDirections = true;
+                }
+              }
+            }
+          }
+          else if (switchDirections)
+          {
+            enemyMoveDirection *= -1;
+            for (var i = 0; i < enemiesArray.length; i++)
+            {
+              if(enemiesArray[i].active)
+              {
+                enemiesArray[i].y += 50;
+                if(enemiesArray[i].y >= 975) enemyOnStage = true;
+              }
+            }
+            switchDirections = false;
+          }
+        }
+        break;
+    }
+  }
