@@ -125,8 +125,10 @@ function ShowPanel(data)
   console.log(obj)
   for (var i = 0; i < 10; i++ ) 
   {
-    ScoreBoardTextArray[i].setActive(true).setVisible(true);
-    ScoreBoardTextArray[i].text = obj[i][0] + "  " + obj[i][1];
+    ScoreBoardTextArray[2*i].setActive(true).setVisible(true);
+    ScoreBoardTextArray[2*i+1].setActive(true).setVisible(true);
+    ScoreBoardTextArray[2*i].text = obj[i][0].toString();
+    ScoreBoardTextArray[2*i+1].text = obj[i][1].toString();
   }
   Panel.setVisible(true)
   Panel.alpha = 1;
@@ -394,6 +396,7 @@ function create ()
   isLose = false;
   isWin = false;
   NowTime = 0;
+  IndicatorTime = 0;
   //isMoveByForce = true;
 
   // Add background, player, enemy, UI Elements
@@ -435,6 +438,8 @@ function create ()
   for(var i = 0; i < 10; i++)
   {
     var ScoreText = this.add.text(1025, 240 + i*75 , 'No Record', { fontFamily: 'font1', fontSize: '48px', fill: '#FFFFFF' }).setDepth(2).setVisible(0);  
+    ScoreBoardTextArray.push(ScoreText)
+    var ScoreText = this.add.text(1600, 240 + i*75 , '10000', { fontFamily: 'font1', fontSize: '48px', fill: '#FFFFFF' }).setDepth(2).setVisible(0).setOrigin(1,0);  
     ScoreBoardTextArray.push(ScoreText)
   }
   
@@ -566,7 +571,7 @@ function create ()
   //Fire bullets from player on SPACE button pressed
   this.input.keyboard.on('keydown_SPACE', function(event)
   {
-      if (player.active === false || isLose)
+      if (player.active === false || isLose || isWin)
       return;
       if(IsBeat)
       {
@@ -678,7 +683,7 @@ function constrainVelocity(sprite, maxVelocity)
 {
   if (!sprite || !sprite.body)
     return;
-  if (isLose)
+  if (isLose || isWin)
   {
     sprite.body.velocity.x = 0;
     sprite.body.velocity.y = 0;
@@ -699,10 +704,12 @@ function constrainVelocity(sprite, maxVelocity)
   }
 }
 
+var IndicatorTime = 0;
 function update (time, delta)
 {
   // Set Beat boolean according time
   NowTime += delta;
+  IndicatorTime += delta;
   if (NowTime%MSPerBeat > MSPerBeat-InputTolerance || NowTime%MSPerBeat < InputTolerance)
   {
     IsBeat=true;
@@ -713,15 +720,15 @@ function update (time, delta)
     IsBeat=false;
   }
   // Set Indicator Work
-  if(NowTime >= 375)
+  if(IndicatorTime >= 375)
   {
     IndicatorCreate(BeamL1, BeamR1, (800.0/MSPerBeat)*delta/3.0,  0.003*delta);
   }
-  if(NowTime >= 750)
+  if(IndicatorTime >= 750)
   {
     IndicatorCreate(BeamL2, BeamR2, (800.0/MSPerBeat)*delta/3.0,  0.003*delta);
   }
-  if(NowTime >= 1125)
+  if(IndicatorTime >= 1125)
   {
     IndicatorCreate(BeamL3, BeamR3, (800.0/MSPerBeat)*delta/3.0, 0.003*delta);
   }
