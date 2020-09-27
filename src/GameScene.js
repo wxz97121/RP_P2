@@ -408,7 +408,7 @@ function create ()
   Volume_Plus_Button.on("pointerup", ()=>{
       if(volume <= 1.0)
       {
-        console.log("+")
+        console.log("+")  
         volume += 0.1;
       }
       game.sound.setVolume(volume);
@@ -424,13 +424,13 @@ function create ()
   })   
 
   UI_Win = this.add.image(800,600,'UI_Win').setDepth(1).setVisible(0);
-  TimeScore_Text = this.add.text(this.game.renderer.width + 152, this.game.renderer.height + 167, '0', { fontFamily: 'font1', fontSize: '48px', fill: '#a32c10' }).setDepth(1).setVisible(0);  
-  Exit_Button = this.add.image(this.game.renderer.width, this.game.renderer.height + 250,"exit_button").setDepth(1).setVisible(0);
+  TimeScore_Text = this.add.text(this.game.renderer.width + 155, this.game.renderer.height - 30, '0', { fontFamily: 'font1', fontSize: '48px', fill: '#a32c10' }).setDepth(1).setVisible(0);  
+  Exit_Button = this.add.image(this.game.renderer.width, this.game.renderer.height + 60,"exit_button").setDepth(1).setVisible(0);
   Exit_Button.setScale(1.3);
   
   UI_Lose = this.add.image(800,600,'UI_Lose').setDepth(1).setVisible(0);
-  PlayAgain_Yes_Button = this.add.image(this.game.renderer.width - 50, this.game.renderer.height + 250,"playagain_yes_button").setDepth(1).setVisible(0);
-  PlayAgain_No_Button = this.add.image(this.game.renderer.width + 50, this.game.renderer.height + 250,"playagain_no_button").setDepth(1).setVisible(0);
+  PlayAgain_Yes_Button = this.add.image(this.game.renderer.width - 50, this.game.renderer.height + 58,"playagain_yes_button").setDepth(1).setVisible(0);
+  PlayAgain_No_Button = this.add.image(this.game.renderer.width + 50, this.game.renderer.height + 60,"playagain_no_button").setDepth(1).setVisible(0);
   PlayAgain_Yes_Button.setScale(1.3);
   PlayAgain_No_Button.setScale(1.3);
 
