@@ -49,6 +49,7 @@ var enemyCount = 0;
 var enemyPhase = 0;
 var enemyMoveDirection = 1;
 var enemyOnStage = false;
+var switchDirections = false;
 var ScoreBoardTextArray = new Array();
 var Panel;
 var Bullet = new Phaser.Class({
@@ -305,7 +306,7 @@ function create ()
   //healthText = this.add.text(1316, 16, 'health: ', { fontFamily: 'font1', fontSize: '48px', fill: '#e0e0e0' }).setDepth(1);
 
   // Set world bounds
-  this.physics.world.setBounds(100, 1000, 1400, 1200);
+  this.physics.world.setBounds(0, 1000, 1600, 1200);
   // Add 2 groups for Bullet objects
 
   playerBullets = this.physics.add.group({ classType: Bullet, runChildUpdate: true });
@@ -662,113 +663,206 @@ function update (time, delta)
 
 function UpdateEnemies()
   {
-    var switchDirections = false;
+    var enemiesArray = enemies.getChildren();
     switch(enemyPhase)
     {
       case 1:
         if(NowTime%(MSPerBeat*4) < 20)
         {
-          EnemyTimer = 0;
-          if (!enemies) return;
-          var enemiesArray = enemies.getChildren();
-          for (var i = 0; i < enemiesArray.length; i++) 
+          if(!switchDirections)
           {
-            enemiesArray[i].x += 50*enemyMoveDirection
-            if((enemiesArray[i].x <= 50 || enemiesArray[i].x >= 1550) && enemiesArray[i].active)
+            if (!enemies) return;
+            for (var i = 0; i < enemiesArray.length; i++) 
             {
-              switchDirections = true;
+              if(enemiesArray[i].active)
+              {
+                enemiesArray[i].x += 50*enemyMoveDirection
+                if((enemiesArray[i].x <= 50 || enemiesArray[i].x >= 1550) && enemiesArray[i].active)
+                {
+                  switchDirections = true;
+                }
+              }
             }
+          }
+          else if (switchDirections)
+          {
+            enemyMoveDirection *= -1;
+            for (var i = 0; i < enemiesArray.length; i++)
+            {
+              if(enemiesArray[i].active)
+              {
+                enemiesArray[i].y += 50;
+                if(enemiesArray[i].y >= 975) enemyOnStage = true;
+              }
+            }
+            switchDirections = false;
           }
         }
         break;
       case 2:
         if(NowTime%(MSPerBeat*2) < 20)
         {
-          EnemyTimer = 0;
-          if (!enemies) return;
-          var enemiesArray = enemies.getChildren();
-          for (var i = 0; i < enemiesArray.length; i++) 
+          if(!switchDirections)
           {
-            enemiesArray[i].x += 50*enemyMoveDirection
-            if((enemiesArray[i].x <= 50 || enemiesArray[i].x >= 1550) && enemiesArray[i].active)
+            if (!enemies) return;
+            for (var i = 0; i < enemiesArray.length; i++) 
             {
-              switchDirections = true;
+              if(enemiesArray[i].active)
+              {
+                enemiesArray[i].x += 50*enemyMoveDirection
+                if((enemiesArray[i].x <= 50 || enemiesArray[i].x >= 1550) && enemiesArray[i].active)
+                {
+                  switchDirections = true;
+                }
+              }
             }
+          }
+          else if (switchDirections)
+          {
+            enemyMoveDirection *= -1;
+            for (var i = 0; i < enemiesArray.length; i++)
+            {
+              if(enemiesArray[i].active)
+              {
+                enemiesArray[i].y += 50;
+                if(enemiesArray[i].y >= 975) enemyOnStage = true;
+              }
+            }
+            switchDirections = false;
           }
         }
         break;
       case 3:
         if(NowTime%(MSPerBeat) < 20)
         {
-          EnemyTimer = 0;
-          if (!enemies) return;
-          var enemiesArray = enemies.getChildren();
-          for (var i = 0; i < enemiesArray.length; i++) 
+          if(!switchDirections)
           {
-            enemiesArray[i].x += 50*enemyMoveDirection
-            if((enemiesArray[i].x <= 50 || enemiesArray[i].x >= 1550) && enemiesArray[i].active)
+            if (!enemies) return;
+            for (var i = 0; i < enemiesArray.length; i++) 
             {
-              switchDirections = true;
+              if(enemiesArray[i].active)
+              {
+                enemiesArray[i].x += 50*enemyMoveDirection
+                if((enemiesArray[i].x <= 50 || enemiesArray[i].x >= 1550) && enemiesArray[i].active)
+                {
+                  switchDirections = true;
+                }
+              }
             }
+          }
+          else if (switchDirections)
+          {
+            enemyMoveDirection *= -1;
+            for (var i = 0; i < enemiesArray.length; i++)
+            {
+              if(enemiesArray[i].active)
+              {
+                enemiesArray[i].y += 50;
+                if(enemiesArray[i].y >= 975) enemyOnStage = true;
+              }
+            }
+            switchDirections = false;
           }
         }
         break;
       case 4:
         if(NowTime%(MSPerBeat/2) < 20)
         {
-          EnemyTimer = 0;
-          if (!enemies) return;
-          var enemiesArray = enemies.getChildren();
-          for (var i = 0; i < enemiesArray.length; i++) 
+          if(!switchDirections)
           {
-            enemiesArray[i].x += 50*enemyMoveDirection
-            if((enemiesArray[i].x <= 50 || enemiesArray[i].x >= 1550) && enemiesArray[i].active)
+            if (!enemies) return;
+            for (var i = 0; i < enemiesArray.length; i++) 
             {
-              switchDirections = true;
+              if(enemiesArray[i].active)
+              {
+                enemiesArray[i].x += 50*enemyMoveDirection
+                if((enemiesArray[i].x <= 50 || enemiesArray[i].x >= 1550) && enemiesArray[i].active)
+                {
+                  switchDirections = true;
+                }
+              }
             }
+          }
+          else if (switchDirections)
+          {
+            enemyMoveDirection *= -1;
+            for (var i = 0; i < enemiesArray.length; i++)
+            {
+              if(enemiesArray[i].active)
+              {
+                enemiesArray[i].y += 50;
+                if(enemiesArray[i].y >= 975) enemyOnStage = true;
+              }
+            }
+            switchDirections = false;
           }
         }
         break;
       case 5:
         if(NowTime%(MSPerBeat/4) < 20)
         {
-          EnemyTimer = 0;
-          if (!enemies) return;
-          var enemiesArray = enemies.getChildren();
-          for (var i = 0; i < enemiesArray.length; i++) 
+          if(!switchDirections)
           {
-            enemiesArray[i].x += 50*enemyMoveDirection
-            if((enemiesArray[i].x <= 50 || enemiesArray[i].x >= 1550) && enemiesArray[i].active)
+            if (!enemies) return;
+            for (var i = 0; i < enemiesArray.length; i++) 
             {
-              switchDirections = true;
+              if(enemiesArray[i].active)
+              {
+                enemiesArray[i].x += 50*enemyMoveDirection
+                if((enemiesArray[i].x <= 50 || enemiesArray[i].x >= 1550) && enemiesArray[i].active)
+                {
+                  switchDirections = true;
+                }
+              }
             }
+          }
+          else if (switchDirections)
+          {
+            enemyMoveDirection *= -1;
+            for (var i = 0; i < enemiesArray.length; i++)
+            {
+              if(enemiesArray[i].active)
+              {
+                enemiesArray[i].y += 50;
+                if(enemiesArray[i].y >= 975) enemyOnStage = true;
+              }
+            }
+            switchDirections = false;
           }
         }
         break;
       case 6:
         if(NowTime%(MSPerBeat/8) < 20)
         {
-          EnemyTimer = 0;
-          if (!enemies) return;
-          var enemiesArray = enemies.getChildren();
-          for (var i = 0; i < enemiesArray.length; i++) 
+          if(!switchDirections)
           {
-            enemiesArray[i].x += 50*enemyMoveDirection
-            if((enemiesArray[i].x <= 50 || enemiesArray[i].x >= 1550) && enemiesArray[i].active)
+            if (!enemies) return;
+            for (var i = 0; i < enemiesArray.length; i++) 
             {
-              switchDirections = true;
+              if(enemiesArray[i].active)
+              {
+                enemiesArray[i].x += 50*enemyMoveDirection
+                if((enemiesArray[i].x <= 50 || enemiesArray[i].x >= 1550) && enemiesArray[i].active)
+                {
+                  switchDirections = true;
+                }
+              }
             }
+          }
+          else if (switchDirections)
+          {
+            enemyMoveDirection *= -1;
+            for (var i = 0; i < enemiesArray.length; i++)
+            {
+              if(enemiesArray[i].active)
+              {
+                enemiesArray[i].y += 50;
+                if(enemiesArray[i].y >= 975) enemyOnStage = true;
+              }
+            }
+            switchDirections = false;
           }
         }
         break;
-    }
-    if (switchDirections) 
-    {
-      enemyMoveDirection *= -1;
-      for (var i = 0; i < enemiesArray.length; i++)
-      {
-        enemiesArray[i].y += 50;
-        if(enemiesArray[i].y >= 975) enemyOnStage = true;
-      }
     }
   }
