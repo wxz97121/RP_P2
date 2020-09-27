@@ -361,9 +361,9 @@ function create ()
   // Add Enemies 
   enemyCount = 0;
   for (var i = 0; i < 9; i++)
-      for(var j = 0; j < 4; j++)
+      for(var j = 0; j < 5; j++)
       {
-          enemy = this.physics.add.image(200+150*i, 100+150*j, 'Enemy1_1');
+          enemy = this.physics.add.image(200+125*i, 100+100*j, 'Enemy1_1');
           enemy.angle = 0;
           enemy.health = 1;
           enemy.lastFired = 0;
@@ -388,6 +388,7 @@ function create ()
           enemyCount++;
       }
       enemyPhase = 1;
+      enemyMoveDirection = 1;
 
   
   // Add Barriers
