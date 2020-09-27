@@ -1,6 +1,8 @@
 /** @type {import("../defs/phaser")} */
 /** @type {import("../defs/matter")} */
 
+//const { debug } = require("webpack");
+
 /*
 var sceneConfig = {
   preload: preload,
@@ -36,9 +38,14 @@ var InputTolerance = 125;
 var MSPerBeat = 375;
 var HasFireThisBeat = false;
 var NowTime;
+var IfPulsing = false;
+var IfExpand = true;
+var IfShrink = false;
+var Pulsingfactor = 0;
 var score = 0.0;
 var scoreText;
 var healthText;
+var volume = 0.5;
 var Bullet = new Phaser.Class({
 
   Extends: Phaser.GameObjects.Image,
@@ -98,6 +105,63 @@ var Bullet = new Phaser.Class({
 
 });
 
+function IndicatorCreate(BeamL, BeamR, Speed, AlphaFactor)
+{
+  BeamL.alpha += AlphaFactor;
+  BeamR.alpha += AlphaFactor;
+
+  BeamL.x += Speed;
+  //console.log(BeamL.x)
+  BeamR.x -= Speed;
+  //console.log(BeamR.x)
+  //if(Math.abs(BeamL.x - BeamR.x) < 1.0)
+  if(BeamR.x <= 800 || BeamL >= 800 )
+  {
+    //console.log("Reset")
+    resetBeamL(BeamL);
+    resetBeamR(BeamR);
+  }
+}
+function resetBeamL(Beam)
+{
+  Beam.x = 0
+  Beam.alpha = 0;
+}
+function resetBeamR(Beam)
+{
+  Beam.x = 1600
+  Beam.alpha = 0;
+}
+function DiscPulsing(DiscObject)
+{
+  if(IfExpand)
+  {
+    scale = Phaser.Math.Interpolation.SmoothStep(Pulsingfactor, 1.0, 1.2);//[1.0, 1.2]
+    Pulsingfactor += 0.16;
+    DiscObject.setScale(scale);
+    if(scale >= 1.2)
+    {
+      IfExpand = false;
+      IfShrink = true;
+      Pulsingfactor = 0;
+    }
+  }
+  if(IfShrink)
+  {
+    scale = Phaser.Math.Interpolation.SmoothStep(Pulsingfactor, 1.2, 1.0);//[1.2, 1.0]
+    Pulsingfactor += 0.16;
+    DiscObject.setScale(scale);
+    if(scale <= 1.0)
+    {
+      IfExpand = true;
+      IfShrink = false;
+      IfPulsing = false;
+      Pulsingfactor = 0;
+      //console.log("Stop Pulse")
+    }
+  }
+  //console.log(scale)
+}
 function PlayerWin()
 {
   //TODO: WIN EFFECT
@@ -116,7 +180,6 @@ function PlayerWin()
   })
   //scene.time.delayedCall(4000,RestartGame);
 }
-
 function PlayerLose(player)
 {
   player.body.velocity.x = 0;
@@ -262,28 +325,32 @@ function BarrierHitCallback(Bullet, Barrier)
 function create ()
 {
   // Set score tracking bar
-  scoreText = this.add.text(16, 16, 'Time: < 0 >', { fontFamily: 'font1', fontSize: '48px', fill: '#e0e0e0' }).setDepth(1);
-  // Set health tracking bar
-  
-  //healthText = this.add.text(1316, 16, 'health: ', { fontFamily: 'font1', fontSize: '48px', fill: '#e0e0e0' }).setDepth(1);
+  scoreText = this.add.text(8, -68, 'Time: < 0 >', { fontFamily: 'font1', fontSize: '48px', fill: '#e0e0e0' }).setDepth(1);
+
+  // Set Indicator
+  Disc = this.add.image(this.game.renderer.width, this.game.renderer.height * 2 - 250, "disc").setDepth(1);
+  Disc.setAlpha(0.6);
+  BeamL1 = this.add.image(0, this.game.renderer.height * 2 - 250, "beam").setDepth(0).setAlpha(0);
+  BeamR1 = this.add.image(1600, this.game.renderer.height * 2 - 250, "beam").setDepth(0).setAlpha(0);
+  BeamL2 = this.add.image(0, this.game.renderer.height * 2 - 250, "beam").setDepth(0).setAlpha(0);
+  BeamR2 = this.add.image(1600, this.game.renderer.height * 2 - 250, "beam").setDepth(0).setAlpha(0);
+  BeamL3 = this.add.image(0, this.game.renderer.height * 2 - 250, "beam").setDepth(0).setAlpha(0);
+  BeamR3 = this.add.image(1600, this.game.renderer.height * 2 - 250, "beam").setDepth(0).setAlpha(0);
 
   // Set world bounds
   this.physics.world.setBounds(100, 1000, 1400, 1200);
-  // Add 2 groups for Bullet objects
 
+  // Add 2 groups for Bullet objects
   playerBullets = this.physics.add.group({ classType: Bullet, runChildUpdate: true });
   enemyBullets = this.physics.add.group({ classType: Bullet, runChildUpdate: true });
-
   enemies = this.physics.add.group();
   barriers = this.physics.add.group();
   
-
-
-    //Play Music
-    this.sound.play("title_bgm",{
+  // Play Music
+  this.sound.play("title_bgm",{
       loop: true
   })
-  game.sound.setVolume(0.5);
+  game.sound.setVolume(volume);
   scene = game.scene.getScene("GameScene");
   isLose = false;
   isWin = false;
@@ -292,17 +359,39 @@ function create ()
 
   // Add background, player, enemy, UI Elements
   background = this.add.image(800, 600, 'background');
+  volumeText = this.add.text(this.game.renderer.width * 2 - 300, -68, 'Volume: ', { fontFamily: 'font1', fontSize: '48px', fill: '#e0e0e0' }).setDepth(1);
+  Volume_Plus_Button = this.add.image(this.game.renderer.width * 2 - 37, -44, "volume_plus_button").setDepth(1);
+  Volume_Minus_Button = this.add.image(this.game.renderer.width * 2 - 90, -44, "volume_minus_button").setDepth(1);
+  Volume_Plus_Button.setInteractive();
+  Volume_Plus_Button.on("pointerup", ()=>{
+      if(volume <= 1.0)
+      {
+        console.log("+")
+        volume += 0.1;
+      }
+      game.sound.setVolume(volume);
+  }) 
+  Volume_Minus_Button.setInteractive();
+  Volume_Minus_Button.on("pointerup", ()=>{
+      if(volume >= 0.0)
+      {
+        console.log("-")
+        volume -= 0.1;
+      }
+      game.sound.setVolume(volume);
+  })   
+
   UI_Win = this.add.image(800,600,'UI_Win').setDepth(1).setVisible(0);
   TimeScore_Text = this.add.text(this.game.renderer.width + 152, this.game.renderer.height + 167, '0', { fontFamily: 'font1', fontSize: '48px', fill: '#a32c10' }).setDepth(1).setVisible(0);  
   Exit_Button = this.add.image(this.game.renderer.width, this.game.renderer.height + 250,"exit_button").setDepth(1).setVisible(0);
   Exit_Button.setScale(1.3);
+  
   UI_Lose = this.add.image(800,600,'UI_Lose').setDepth(1).setVisible(0);
   PlayAgain_Yes_Button = this.add.image(this.game.renderer.width - 50, this.game.renderer.height + 250,"playagain_yes_button").setDepth(1).setVisible(0);
   PlayAgain_No_Button = this.add.image(this.game.renderer.width + 50, this.game.renderer.height + 250,"playagain_no_button").setDepth(1).setVisible(0);
   PlayAgain_Yes_Button.setScale(1.3);
   PlayAgain_No_Button.setScale(1.3);
   
-
   //player = this.physics.add.sprite(800, 1000, 'player_handgun');
   player = this.physics.add.image(800,1000,'Player');
   player.rotation = 0;
@@ -342,7 +431,6 @@ function create ()
           enemies.add(enemy);
       }
 
-  
   // Add Barriers
   for (var i = 0; i < 4; i++)
   {
@@ -352,7 +440,6 @@ function create ()
   }
   isBarrierExist = true;
   SwitchBarrier(barriers);
-  
 
   // Set image/sprite properties
   UI_Win.setScale(1.5,1.5);
@@ -361,7 +448,6 @@ function create ()
   player.setOrigin(0.5, 0.5).setDisplaySize(120, 120).setCollideWorldBounds(true).setDrag(800);
   UI_Win.setOrigin(0.5,0.5);
   UI_Win.alpha = 0;
-
   UI_Lose.setOrigin(0.5,0.5);
   UI_Lose.alpha = 0;
   
@@ -370,7 +456,6 @@ function create ()
 
   // Set sprite variables
   player.health = 1;
-
 
   // Set camera properties
   this.cameras.main.zoom = 0.5;
@@ -433,6 +518,10 @@ function create ()
   {
       if (player.active === false || isLose)
       return;
+      if(IsBeat)
+      {
+        IfPulsing = true;
+      }
       if (!IsBeat)
       {
         this.cameras.main.shake(500);
@@ -453,7 +542,6 @@ function create ()
       
   },this);
 }
-
 
 function enemyHitCallback(enemyHit, bulletHit)
 {
@@ -566,6 +654,24 @@ function update (time, delta)
     HasFireThisBeat=false;
     IsBeat=false;
   }
+  // Set Indicator Work
+  if(NowTime >= 375)
+  {
+    IndicatorCreate(BeamL1, BeamR1, (800.0/MSPerBeat)*delta/3.0,  0.003*delta);
+  }
+  if(NowTime >= 750)
+  {
+    IndicatorCreate(BeamL2, BeamR2, (800.0/MSPerBeat)*delta/3.0,  0.003*delta);
+  }
+  if(NowTime >= 1125)
+  {
+    IndicatorCreate(BeamL3, BeamR3, (800.0/MSPerBeat)*delta/3.0, 0.003*delta);
+  }
+  // Set Onbeat Visual Cue
+  if(IfPulsing)
+  {
+    DiscPulsing(Disc);
+  }
   // Set Score/Time Accounting
   if(!isWin && !isLose)
   {
@@ -602,5 +708,4 @@ function update (time, delta)
         break;
     }
   });
-
 }

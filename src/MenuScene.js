@@ -5,13 +5,15 @@ class MenuScene extends Phaser.Scene{
     }
     init()
     {
-        console.log("MenuScene Ready")
+        //console.log("MenuScene Ready")
     }
     create()
     {
         this.add.image(0,0,"title_bg").setOrigin(0).setDepth(0);
-        let PlayButton = this.add.image(this.game.renderer.width / 2, this.game.renderer.height / 2 + 70,"play_button").setDepth(1);
-        let OptionButton = this.add.image(this.game.renderer.width / 2, this.game.renderer.height / 2 + 150,"option_button").setDepth(1);
+        let PlayButton = this.add.image(this.game.renderer.width / 2, this.game.renderer.height / 2 + 120,"play_button").setDepth(1);
+        let OptionButton = this.add.image(this.game.renderer.width / 2, this.game.renderer.height / 2 + 230,"option_button").setDepth(1);
+        //let Back_Button = this.add.image(this.game.renderer.width / 2, this.game.renderer.height / 2 + 150,"back_button").setDepth(1).setVisible(0);
+
         this.sound.pauseOnBlur = false;
         this.sound.play("title_bgm",{
             loop: true
@@ -21,7 +23,6 @@ class MenuScene extends Phaser.Scene{
         PlayButton.on("pointerup", ()=>{
             this.sound.stopAll();
             this.scene.start("GameScene");
-        })
-       
+        })      
     }
 }
