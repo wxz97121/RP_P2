@@ -125,13 +125,19 @@ function ShowPanel(data)
   console.log(obj)
   for (var i = 0; i < 10; i++ ) 
   {
-    ScoreBoardTextArray[2*i].setActive(true).setVisible(true);
-    ScoreBoardTextArray[2*i+1].setActive(true).setVisible(true);
-    ScoreBoardTextArray[2*i].text = obj[i][0].toString();
-    ScoreBoardTextArray[2*i+1].text = obj[i][1].toString();
+    try {
+      ScoreBoardTextArray[2*i].setActive(true).setVisible(true);
+      ScoreBoardTextArray[2*i+1].setActive(true).setVisible(true);
+      ScoreBoardTextArray[2*i].text = obj[i][0].toString();
+      ScoreBoardTextArray[2*i+1].text = obj[i][1].toString();
+      
+    }
+    catch (error) {
+      console.log(error);
+    }
   }
   Panel.setVisible(true)
-  Panel.alpha = 1;
+  Panel.alpha = 0.75;
 }
 
 function IndicatorCreate(BeamL, BeamR, Speed, AlphaFactor)
@@ -191,6 +197,8 @@ function DiscPulsing(DiscObject)
   }
   //console.log(scale)
 }
+
+
 function PlayerWin()
 {
   //TODO: WIN EFFECT
@@ -200,11 +208,16 @@ function PlayerWin()
   game.sound.setRate(2)
   isWin = true;
   enemyPhase = 0;
+
   UI_Win.setVisible(1);
+  UI_Win.x-=400;
   TimeScore_Text.setVisible(1);
   TimeScore_Text.setText(score);
+  TimeScore_Text.x-=400;
   Exit_Button.setVisible(1);
   Exit_Button.setInteractive();
+  Exit_Button.x-=400;
+
   var data = ""
   try{
     console.log('POST BEGIN');
@@ -340,7 +353,10 @@ function preload ()
 
   this.load.image('background', 'assets/Sprites/background_v2.png');
   this.load.image('Barrier','assets/Sprites/barrier.png');
-  this.load.image('Panel', 'assets/Sprites/Panel.png')
+  this.load.image('Barrier2','assets/Sprites/barrier2.png');
+  this.load.image('Barrier3','assets/Sprites/barrier3.png');
+  this.load.image('Barrier4','assets/Sprites/barrier4.png');
+  this.load.image('Panel', 'assets/Panel.png')
 }
 
 function BulletHitCallback(playerBullet, enemyBullet)
@@ -357,8 +373,11 @@ function BarrierHitCallback(Bullet, Barrier)
   if(Bullet.active===true && Barrier.active===true)
   {  
     Bullet.setActive(false).setVisible(false);
-    Barrier.alpha -= 0.1;
-    if (Barrier.alpha<=0.4) Barrier.setActive(false).setVisible(false);
+    Barrier.hp -= 1;
+    if (Barrier.hp <= 0) Barrier.setActive(false).setVisible(false);
+    else if (Barrier.hp <= 2) Barrier.setTexture('Barrier4');
+    else if (Barrier.hp <= 4) Barrier.setTexture('Barrier3');
+    else if (Barrier.hp <= 6) Barrier.setTexture('Barrier2');
   }
 }
 
@@ -386,6 +405,7 @@ function create ()
   enemyBullets = this.physics.add.group({ classType: Bullet, runChildUpdate: true });
   enemies = this.physics.add.group();
   barriers = this.physics.add.group();
+  ScoreBoardTextArray = [];
   
   // Play Music
   this.sound.play("title_bgm",{
@@ -397,6 +417,7 @@ function create ()
   isWin = false;
   NowTime = 0;
   IndicatorTime = 0;
+  enemyOnStage = false;
   //isMoveByForce = true;
 
   // Add background, player, enemy, UI Elements
@@ -434,12 +455,12 @@ function create ()
   PlayAgain_Yes_Button.setScale(1.3);
   PlayAgain_No_Button.setScale(1.3);
 
-  Panel = this.add.image(1300,600,'Panel').setDepth(1).setVisible(false).setDisplaySize(600,800).setOrigin(0.5,0.5);
+  Panel = this.add.image(1100,600,'Panel').setDepth(1).setVisible(false).setDisplaySize(700,800).setOrigin(0.5,0.5);
   for(var i = 0; i < 10; i++)
   {
-    var ScoreText = this.add.text(1025, 240 + i*75 , 'No Record', { fontFamily: 'font1', fontSize: '48px', fill: '#FFFFFF' }).setDepth(2).setVisible(0);  
+    var ScoreText = this.add.text(1025-250, 240 + i*75 , 'No Record', { fontFamily: 'font1', fontSize: '48px', fill: '#FFFFFF' }).setDepth(2).setVisible(0);  
     ScoreBoardTextArray.push(ScoreText)
-    var ScoreText = this.add.text(1600, 240 + i*75 , '10000', { fontFamily: 'font1', fontSize: '48px', fill: '#FFFFFF' }).setDepth(2).setVisible(0).setOrigin(1,0);  
+    var ScoreText = this.add.text(1500-100, 240 + i*75 , '10000', { fontFamily: 'font1', fontSize: '48px', fill: '#FFFFFF' }).setDepth(2).setVisible(0).setOrigin(1,0);  
     ScoreBoardTextArray.push(ScoreText)
   }
   
@@ -491,6 +512,7 @@ function create ()
   {
     barrier = this.physics.add.image(200+400*i, 850, 'Barrier');
     barrier.setOrigin(0.5, 0.5).setDisplaySize(153.6, 76.8).setCollideWorldBounds(true);
+    barrier.hp = 8;
     barriers.add(barrier);
   }
   isBarrierExist = true;
@@ -500,7 +522,7 @@ function create ()
   UI_Win.setScale(1.5,1.5);
   UI_Lose.setScale(1.5,1.5);
   background.setOrigin(0.5, 0.5).setDisplaySize(1600, 1200);
-  player.setOrigin(0.5, 0.5).setDisplaySize(120, 120).setCollideWorldBounds(true).setDrag(0);
+  player.setOrigin(0.5, 0.5).setDisplaySize(88, 128).setCollideWorldBounds(true).setDrag(0);
   UI_Win.setOrigin(0.5,0.5);
   UI_Win.alpha = 0;
   UI_Lose.setOrigin(0.5,0.5);
