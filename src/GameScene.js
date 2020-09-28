@@ -58,6 +58,7 @@ var enemyOnStage = false;
 var switchDirections = false;
 var ScoreBoardTextArray = new Array();
 var Panel;
+var Image5S;
 
 
 var Bullet = new Phaser.Class({
@@ -223,14 +224,23 @@ function PlayerWin()
     console.log('POST BEGIN');
     var xhr = new XMLHttpRequest();
     //xhr.setRequestHeader('content-type', 'application/json');
-    xhr.open("POST",'http://localhost:8080',false);
+    xhr.open("POST",'https://git.wxzuir.moe:12197',true);
+    xhr.onload = function (e) {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+          data = xhr.responseText;
+          ShowPanel(data);
+        } else {
+          console.error(xhr.statusText);
+        }
+      }
+    };
     xhr.send(scene.Playername + '\n' + score.toString());
-    data = xhr.responseText;
   }
   catch{
     data = '';
   }
-  ShowPanel(data);
+
   Exit_Button.on("pointerup", ()=>{
       ExitGame();
   })
@@ -356,7 +366,8 @@ function preload ()
   this.load.image('Barrier2','assets/Sprites/barrier2.png');
   this.load.image('Barrier3','assets/Sprites/barrier3.png');
   this.load.image('Barrier4','assets/Sprites/barrier4.png');
-  this.load.image('Panel', 'assets/Panel.png')
+  this.load.image('Panel', 'assets/Panel.png');
+  this.load.image('5s','assets/Sprites/5S.png');
 }
 
 function BulletHitCallback(playerBullet, enemyBullet)
@@ -386,6 +397,7 @@ function create ()
   console.log(this.Playername);
   // Set score tracking bar
   scoreText = this.add.text(8, -68, 'Time: < 0 >', { fontFamily: 'font1', fontSize: '48px', fill: '#e0e0e0' }).setDepth(1);
+  Image5S = this.add.image(150,-5,"5s").setDepth(0).setAlpha(0);
 
   // Set Indicator
   Disc = this.add.image(this.game.renderer.width, this.game.renderer.height * 2 - 250, "disc").setDepth(1);
@@ -601,6 +613,8 @@ function create ()
       }
       if (!IsBeat)
       {
+        Image5S.alpha = 1;
+        Image5S.setPosition(150,-5);
         this.cameras.main.shake(500);
         NowTime += 5000 // Time Punishment
         return;
@@ -786,13 +800,19 @@ function update (time, delta)
   //TODO: Change Enemies Behaviour, to adpat Music
   enemiesFire(enemies, time, this);
 
+  Image5S.y -= 0.25*delta;
   if (!isWin && !isLose) CheckGameOver(player,enemies);
 
   // Debug for Win
   this.input.keyboard.on(Phaser.Input.Keyboard.Events.ANY_KEY_DOWN, (event) => {
     switch(event.code) {
         case 'Digit1':
-           if (!isWin && !isLose) PlayerWin();
+           if (!isWin && !isLose) 
+           {
+             NowTime = 20000;
+             score = NowTime;
+             PlayerWin();
+           }
         break;
     }
   });

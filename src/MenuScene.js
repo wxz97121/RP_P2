@@ -30,14 +30,8 @@ class MenuScene extends Phaser.Scene{
             this.scene.start("GameScene",{Playername: this.Playername});
         })
         
-        var TestScore = 500;
         OptionButton.on("pointerup",()=>{
-            console.log('POST BEGIN');
-            var xhr = new XMLHttpRequest();
-            //xhr.setRequestHeader('content-type', 'application/json');
-            xhr.open("POST",'http://localhost:8080',false);
-            xhr.send(this.Playername + '\n' + TestScore.toString());
-            console.log(xhr.responseText);
+            console.log("WORK IN PROGRESS")
         })
         if (this.Playername === '')
         {
