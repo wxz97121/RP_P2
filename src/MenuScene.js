@@ -29,7 +29,6 @@ class MenuScene extends Phaser.Scene{
             this.sound.stopAll();
             this.scene.start("GameScene",{Playername: this.Playername});
         })
-        
         OptionButton.on("pointerup",()=>{
             console.log("WORK IN PROGRESS")
         })
@@ -37,7 +36,7 @@ class MenuScene extends Phaser.Scene{
         {
             PlayButton.setVisible(false);
             OptionButton.setVisible(false);
-            var element = this.add.dom(400, 450).createFromCache('InputFieldHTML');
+            var element = this.add.dom(420, 500).createFromCache('InputFieldHTML');
             element.addListener('click');
             element.on('click', function (event) {
                 if (event.target.name === 'playButton')

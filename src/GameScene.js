@@ -59,6 +59,8 @@ var switchDirections = false;
 var ScoreBoardTextArray = new Array();
 var Panel;
 var Image5S;
+var IfPunish5S = false;
+var Popupfactor = 0;
 
 
 var Bullet = new Phaser.Class({
@@ -138,9 +140,8 @@ function ShowPanel(data)
     }
   }
   Panel.setVisible(true)
-  Panel.alpha = 0.75;
+  Panel.alpha = 1.0;
 }
-
 function IndicatorCreate(BeamL, BeamR, Speed, AlphaFactor)
 {
   BeamL.alpha += AlphaFactor;
@@ -172,10 +173,10 @@ function DiscPulsing(DiscObject)
 {
   if(IfExpand)
   {
-    scale = Phaser.Math.Interpolation.SmoothStep(Pulsingfactor, 1.0, 1.2);//[1.0, 1.2]
+    scale = Phaser.Math.Interpolation.SmoothStep(Pulsingfactor, 1.0, 1.4);//[1.0, 1.2]
     Pulsingfactor += 0.16;
     DiscObject.setScale(scale);
-    if(scale >= 1.2)
+    if(scale >= 1.4)
     {
       IfExpand = false;
       IfShrink = true;
@@ -184,7 +185,7 @@ function DiscPulsing(DiscObject)
   }
   if(IfShrink)
   {
-    scale = Phaser.Math.Interpolation.SmoothStep(Pulsingfactor, 1.2, 1.0);//[1.2, 1.0]
+    scale = Phaser.Math.Interpolation.SmoothStep(Pulsingfactor, 1.4, 1.0);//[1.2, 1.0]
     Pulsingfactor += 0.16;
     DiscObject.setScale(scale);
     if(scale <= 1.0)
@@ -198,8 +199,17 @@ function DiscPulsing(DiscObject)
   }
   //console.log(scale)
 }
-
-
+function AddFiveSeconds(Image5S)
+{
+    posiy = Phaser.Math.Interpolation.SmoothStep(Popupfactor, 100, -150);
+    Popupfactor += 0.015;
+    Image5S.y = posiy;
+    if(Image5S.y <= -150)
+    {
+      IfPunish5S = false;
+      Popupfactor = 0;
+    }
+}
 function PlayerWin()
 {
   //TODO: WIN EFFECT
@@ -287,7 +297,16 @@ function ExitGame()
   //console.log(Name);
   game.scene.start("MenuScene",{Playername: scene.Playername});
 }
-
+function CreateUFOBeam(EnemyOject)
+{
+  UFOBeam.setPosition(EnemyOject.x, EnemyOject.y - 30);
+  UFOBeam.setAlpha(0.7);
+  UFOBeam.anims.play("UFOBeam_anim");
+  UFOBeam.once('animationcomplete', ()=>{
+    //console.log("Enemy Destroy")
+    EnemyOject.setActive(false).setVisible(false);
+  });
+}
 //isMoveByForce = true;
 function SwitchInputMode()
 {
@@ -339,35 +358,6 @@ function preload ()
 {
   // Load in images and sprites
   console.log("GameScene Loaded");
-  /*
-  this.load.spritesheet('player_handgun', 'assets/player_handgun.png',
-      { frameWidth: 66, frameHeight: 60 }
-  ); // Made by tokkatrain: https://tokkatrain.itch.io/top-down-basic-set
-  */
-
-  this.load.image('Player','assets/Sprites/Character_back1.png');
-  this.load.image('Player2','assets/Sprites/Character_back2.png');
-
-  this.load.image('Enemy1_1','assets/Sprites/enemy_a1.png');
-  this.load.image('Enemy2_1','assets/Sprites/enemy_b1.png');
-  this.load.image('Enemy3_1','assets/Sprites/enemy_c1.png');
-
-  this.load.image('Enemy1_2','assets/Sprites/enemy_a2.png');
-  this.load.image('Enemy2_2','assets/Sprites/enemy_b2.png');
-  this.load.image('Enemy3_2','assets/Sprites/enemy_c2.png');
-
-  this.load.image('projectile1','assets/Sprites/projectile1.png');
-  this.load.image('projectile2','assets/Sprites/projectile2.png');
-  this.load.image('projectile3','assets/Sprites/projectile3.png');
-  this.load.image('projectile4','assets/Sprites/projectile4.png');
-
-  this.load.image('background', 'assets/Sprites/background_v2.png');
-  this.load.image('Barrier','assets/Sprites/barrier.png');
-  this.load.image('Barrier2','assets/Sprites/barrier2.png');
-  this.load.image('Barrier3','assets/Sprites/barrier3.png');
-  this.load.image('Barrier4','assets/Sprites/barrier4.png');
-  this.load.image('Panel', 'assets/Panel.png');
-  this.load.image('5s','assets/Sprites/5S.png');
 }
 
 function BulletHitCallback(playerBullet, enemyBullet)
@@ -397,17 +387,30 @@ function create ()
   console.log(this.Playername);
   // Set score tracking bar
   scoreText = this.add.text(8, -68, 'Time: < 0 >', { fontFamily: 'font1', fontSize: '48px', fill: '#e0e0e0' }).setDepth(1);
-  Image5S = this.add.image(150,-5,"5s").setDepth(0).setAlpha(0);
+  Image5S = this.add.image(150,-5,"+5s").setDepth(2).setAlpha(0).setScale(1.5);
 
   // Set Indicator
-  Disc = this.add.image(this.game.renderer.width, this.game.renderer.height * 2 - 250, "disc").setDepth(1);
-  Disc.setAlpha(0.6);
-  BeamL1 = this.add.image(0, this.game.renderer.height * 2 - 250, "beam").setDepth(0).setAlpha(0);
-  BeamR1 = this.add.image(1600, this.game.renderer.height * 2 - 250, "beam").setDepth(0).setAlpha(0);
-  BeamL2 = this.add.image(0, this.game.renderer.height * 2 - 250, "beam").setDepth(0).setAlpha(0);
-  BeamR2 = this.add.image(1600, this.game.renderer.height * 2 - 250, "beam").setDepth(0).setAlpha(0);
-  BeamL3 = this.add.image(0, this.game.renderer.height * 2 - 250, "beam").setDepth(0).setAlpha(0);
-  BeamR3 = this.add.image(1600, this.game.renderer.height * 2 - 250, "beam").setDepth(0).setAlpha(0);
+  DiscMechine = this.add.image(this.game.renderer.width, this.game.renderer.height * 2 - 250, "discmechine").setDepth(1);
+  DiscBar = this.add.image(this.game.renderer.width + 45, this.game.renderer.height * 2 - 230, "discbar").setDepth(3);
+  Disc = this.add.image(this.game.renderer.width, this.game.renderer.height * 2 - 250, "disc").setDepth(2);
+  Disc.setAlpha(0.9);
+  BeamL1 = this.add.image(0, this.game.renderer.height * 2 - 250, "beam").setDepth(1).setAlpha(0);
+  BeamR1 = this.add.image(1600, this.game.renderer.height * 2 - 250, "beam").setDepth(1).setAlpha(0);
+  BeamL2 = this.add.image(0, this.game.renderer.height * 2 - 250, "beam").setDepth(1).setAlpha(0);
+  BeamR2 = this.add.image(1600, this.game.renderer.height * 2 - 250, "beam").setDepth(1).setAlpha(0);
+  BeamL3 = this.add.image(0, this.game.renderer.height * 2 - 250, "beam").setDepth(1).setAlpha(0);
+  BeamR3 = this.add.image(1600, this.game.renderer.height * 2 - 250, "beam").setDepth(1).setAlpha(0);
+
+  // Set UFO Beam Animation
+  UFOBeam = this.add.sprite(this.game.renderer.width, this.game.renderer.height, "ufobeam").setDepth(1).setAlpha(0).setScale(1.5);
+  this.anims.create({
+    key: "UFOBeam_anim",
+    frames: this.anims.generateFrameNumbers("ufobeam"),
+    frameRate: 36,
+    repeat: 0,
+    showOnStart: true,
+    hideOnComplete: true
+  })
 
   // Set world bounds
   this.physics.world.setBounds(0, 1000, 1600, 1200);
@@ -433,7 +436,7 @@ function create ()
   //isMoveByForce = true;
 
   // Add background, player, enemy, UI Elements
-  background = this.add.image(800, 600, 'background');
+  background = this.add.image(800, 700, 'background');
   volumeText = this.add.text(this.game.renderer.width * 2 - 300, -68, 'Volume: ', { fontFamily: 'font1', fontSize: '48px', fill: '#e0e0e0' }).setDepth(1);
   Volume_Plus_Button = this.add.image(this.game.renderer.width * 2 - 37, -44, "volume_plus_button").setDepth(1);
   Volume_Minus_Button = this.add.image(this.game.renderer.width * 2 - 90, -44, "volume_minus_button").setDepth(1);
@@ -459,20 +462,20 @@ function create ()
   UI_Win = this.add.image(800,600,'UI_Win').setDepth(1).setVisible(0);
   TimeScore_Text = this.add.text(this.game.renderer.width + 155, this.game.renderer.height - 30, '0', { fontFamily: 'font1', fontSize: '48px', fill: '#a32c10' }).setDepth(1).setVisible(0);  
   Exit_Button = this.add.image(this.game.renderer.width, this.game.renderer.height + 60,"exit_button").setDepth(1).setVisible(0);
-  Exit_Button.setScale(1.3);
+  Exit_Button.setScale(1.4);
   
   UI_Lose = this.add.image(800,600,'UI_Lose').setDepth(1).setVisible(0);
   PlayAgain_Yes_Button = this.add.image(this.game.renderer.width - 50, this.game.renderer.height + 58,"playagain_yes_button").setDepth(1).setVisible(0);
   PlayAgain_No_Button = this.add.image(this.game.renderer.width + 50, this.game.renderer.height + 60,"playagain_no_button").setDepth(1).setVisible(0);
-  PlayAgain_Yes_Button.setScale(1.3);
-  PlayAgain_No_Button.setScale(1.3);
+  PlayAgain_Yes_Button.setScale(1.4);
+  PlayAgain_No_Button.setScale(1.4);
 
-  Panel = this.add.image(1100,600,'Panel').setDepth(1).setVisible(false).setDisplaySize(700,800).setOrigin(0.5,0.5);
+  Panel = this.add.image(1100,600,'Panel').setDepth(1).setVisible(false).setOrigin(0.5,0.5);
   for(var i = 0; i < 10; i++)
   {
-    var ScoreText = this.add.text(1025-250, 240 + i*75 , 'No Record', { fontFamily: 'font1', fontSize: '48px', fill: '#FFFFFF' }).setDepth(2).setVisible(0);  
+    var ScoreText = this.add.text(1025-250, 320 + i*75 , 'No Record', { fontFamily: 'font1', fontSize: '48px', fill: '#FFFFFF' }).setDepth(2).setVisible(0);  
     ScoreBoardTextArray.push(ScoreText)
-    var ScoreText = this.add.text(1500-100, 240 + i*75 , '10000', { fontFamily: 'font1', fontSize: '48px', fill: '#FFFFFF' }).setDepth(2).setVisible(0).setOrigin(1,0);  
+    var ScoreText = this.add.text(1500-100, 320 + i*75 , '10000', { fontFamily: 'font1', fontSize: '48px', fill: '#FFFFFF' }).setDepth(2).setVisible(0).setOrigin(1,0);  
     ScoreBoardTextArray.push(ScoreText)
   }
   
@@ -533,7 +536,7 @@ function create ()
   // Set image/sprite properties
   UI_Win.setScale(1.5,1.5);
   UI_Lose.setScale(1.5,1.5);
-  background.setOrigin(0.5, 0.5).setDisplaySize(1600, 1200);
+  background.setOrigin(0.5, 0.5).setDisplaySize(1600, 1400);
   player.setOrigin(0.5, 0.5).setDisplaySize(88, 128).setCollideWorldBounds(true).setDrag(0);
   UI_Win.setOrigin(0.5,0.5);
   UI_Win.alpha = 0;
@@ -613,8 +616,9 @@ function create ()
       }
       if (!IsBeat)
       {
-        Image5S.alpha = 1;
-        Image5S.setPosition(150,-5);
+        IfPunish5S = true;
+        Image5S.setPosition(400,100);
+        Image5S.alpha = 0;
         this.cameras.main.shake(500);
         NowTime += 5000 // Time Punishment
         return;
@@ -645,7 +649,7 @@ function enemyHitCallback(enemyHit, bulletHit)
       // Kill enemy if health <= 0
       if (enemyHit.health <= 0)
       {
-         enemyHit.setActive(false).setVisible(false);
+         CreateUFOBeam(enemyHit);
       }
 
       // Destroy bullet
@@ -794,13 +798,19 @@ function update (time, delta)
   if (isLose) UI_Lose.alpha += 0.005*delta;
 
   UpdateEnemies();
+
   // Constrain velocity of player
   constrainVelocity(player, 350);
 
   //TODO: Change Enemies Behaviour, to adpat Music
   enemiesFire(enemies, time, this);
 
-  Image5S.y -= 0.25*delta;
+  if(IfPunish5S)
+  {
+    AddFiveSeconds(Image5S);
+    Image5S.alpha += 0.002*delta;
+  }
+
   if (!isWin && !isLose) CheckGameOver(player,enemies);
 
   // Debug for Win
